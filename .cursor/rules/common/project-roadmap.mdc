@@ -1,0 +1,84 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Project Roadmap
+
+This document outlines the development plan for the English Vocabulary App across a 3-month period.
+
+## Month 1: Backend Core and Foundation
+
+### Week 1-2: Setup and Authentication
+- Project structure setup
+- Domain entities implementation
+- User authentication with JWT
+- Basic API endpoints
+
+### Week 3-4: Core Features
+- Word and WordSet management
+- User progress tracking
+- Spaced repetition algorithm basics
+- Initial database seeding
+
+## Month 2: Frontend Development and Integration
+
+### Week 5-6: Frontend Foundation
+- React project setup
+- UI component development
+- Authentication UI
+- API integration
+
+### Week 7-8: Core Feature Implementation
+- Flashcard system
+- Word management interface
+- Study session tracking
+- Progress visualization
+
+## Month 3: Advanced Features and Refinement
+
+### Week 9-10: Advanced Learning Features
+- Mobile responsiveness
+- Offline capabilities
+- Advanced study algorithms
+- Content enrichment
+
+### Week 11-12: Testing and Deployment
+- Unit and integration testing
+- Performance optimization
+- Documentation
+- Deployment preparation
+
+## Feature Priority
+
+### Must-have (MVP)
+- User authentication
+- Basic word management
+- Simple flashcard study system
+- Basic progress tracking
+
+### Should-have
+- Spaced repetition algorithm
+- Word sets and categorization
+- Study statistics and reports
+- Mobile-responsive design
+
+### Could-have
+- Offline functionality
+- Social features (sharing word sets)
+- Gamification elements
+- Multiple learning modes
+
+## Implementation Strategy
+
+1. Start with a minimal viable product (MVP) focusing on core features
+2. Use an iterative approach, adding features incrementally
+3. Prioritize features based on learning effectiveness
+4. Regularly test with users to gather feedback
+
+## Next Development Focus
+
+- Complete domain model implementation
+- Set up database context and repositories
+- Implement authentication endpoints
+- Create basic word management API

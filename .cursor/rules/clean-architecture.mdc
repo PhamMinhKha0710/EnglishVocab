@@ -1,0 +1,87 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Clean Architecture Guidelines
+
+This application follows Clean Architecture principles with the following layers:
+
+## 1. Domain Layer (EnglishVocab.Domain)
+
+- **Core business logic and entities**
+- No dependencies on other layers or external frameworks
+- Contains:
+  - Entities
+  - Value Objects
+  - Enums
+  - Domain Events
+  - Domain Exceptions
+
+## 2. Application Layer (EnglishVocab.Application)
+
+- **Use cases and application business rules**
+- Depends only on the Domain layer
+- Implements CQRS pattern (Command Query Responsibility Segregation):
+  - Commands: modifying data
+  - Queries: retrieving data
+- Contains:
+  - Command/Query Handlers
+  - DTOs (Data Transfer Objects)
+  - Interface definitions for infrastructure services
+  - Validation logic
+
+## 3. Infrastructure Layer (EnglishVocab.Infrastructure)
+
+- **Technical details and implementations**
+- Depends on Application and Domain layers
+- Contains:
+  - Database context and migrations
+  - Repository implementations
+  - External services implementation
+  - Authentication services
+  - Caching
+  - Logging
+
+## 4. Presentation Layer (EnglishVocab.API)
+
+- **User interface and API endpoints**
+- Depends on Application layer (not on Infrastructure or Domain directly)
+- Contains:
+  - API Controllers
+  - Middleware
+  - Filters
+  - Configuration
+
+## Dependency Flow
+
+```
+API Layer → Application Layer → Domain Layer
+              ↑                    ↑
+              |                    |
+       Infrastructure Layer -------+
+```
+
+## Guidelines for Development
+
+1. **Dependencies should always point inward**
+   - Outer layers can depend on inner layers
+   - Inner layers cannot depend on outer layers
+
+2. **Domain Layer Independence**
+   - Domain layer should be framework-agnostic
+   - No references to UI, database, or external services
+
+3. **Use Dependency Injection**
+   - Inject dependencies rather than creating them directly
+   - Especially for infrastructure services
+
+4. **Communication between layers**
+   - Use interfaces defined in the Application layer
+   - Infrastructure implements these interfaces
+   - API layer invokes commands/queries in the Application layer
+
+5. **CQRS Pattern**
+   - Commands: modify state, return nothing
+   - Queries: return data, don't modify state
+   - Use MediatR for dispatching commands and queries

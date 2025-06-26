@@ -1,0 +1,386 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# ASP.NET Core API Standards
+
+This document outlines the standards and best practices for developing ASP.NET Core Web APIs for the English Vocabulary App.
+
+## API Design Principles
+
+### RESTful Design
+
+- Use resource-oriented routes (e.g., `/api/words`, `/api/wordsets`)
+- Use HTTP methods appropriately:
+  - `GET` for retrieving resources
+  - `POST` for creating resources
+  - `PUT` for updating resources
+  - `DELETE` for removing resources
+  - `PATCH` for partial updates
+- Return appropriate HTTP status codes:
+  - `200 OK` for successful operations
+  - `201 Created` for resource creation
+  - `204 No Content` for successful operations without response body
+  - `400 Bad Request` for invalid requests
+  - `401 Unauthorized` for authentication failures
+  - `403 Forbidden` for authorization failures
+  - `404 Not Found` for resources that don't exist
+  - `500 Internal Server Error` for server errors
+
+### API Versioning
+
+```csharp
+// In Program.cs or Startup.cs
+services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ApiVersionReader = new HeaderApiVersionReader("X-API-Version");
+});
+
+// In controller
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class WordsController : ControllerBase
+{
+    // Controller methods
+}
+```
+
+## Controller Implementation
+
+### Controller Structure
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class WordsController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public WordsController(IMediator mediator)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<WordDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllWordsQuery());
+        return Ok(result);
+    }
+
+    // Other endpoints...
+}
+```
+
+### API Documentation
+
+Use Swagger/OpenAPI with XML comments:
+
+```csharp
+// In Program.cs or Startup.cs
+services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { 
+        Title = "English Vocabulary API", 
+        Version = "v1",
+        Description = "API for English vocabulary learning application"
+    });
+    
+    // Include XML comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
+
+// In controller methods
+/// <summary>
+/// Retrieves all words
+/// </summary>
+/// <returns>A collection of words</returns>
+/// <response code="200">Returns the list of words</response>
+[HttpGet]
+[ProducesResponseType(typeof(IEnumerable<WordDto>), StatusCodes.Status200OK)]
+public async Task<IActionResult> GetAll()
+{
+    // Implementation
+}
+```
+
+## Input Validation
+
+### Model Validation with Data Annotations
+
+```csharp
+public class CreateWordCommand : IRequest<WordDto>
+{
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public string English { get; set; }
+    
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public string Vietnamese { get; set; }
+    
+    [StringLength(200)]
+    public string? Example { get; set; }
+    
+    public DifficultyLevel DifficultyLevel { get; set; }
+}
+```
+
+### Fluent Validation
+
+```csharp
+public class CreateWordCommandValidator : AbstractValidator<CreateWordCommand>
+{
+    public CreateWordCommandValidator()
+    {
+        RuleFor(x => x.English)
+            .NotEmpty().WithMessage("English word is required")
+            .MaximumLength(100).WithMessage("English word cannot exceed 100 characters");
+            
+        RuleFor(x => x.Vietnamese)
+            .NotEmpty().WithMessage("Vietnamese translation is required")
+            .MaximumLength(100).WithMessage("Vietnamese translation cannot exceed 100 characters");
+            
+        RuleFor(x => x.Example)
+            .MaximumLength(200).WithMessage("Example cannot exceed 200 characters");
+    }
+}
+```
+
+## Authentication and Authorization
+
+### JWT Authentication
+
+```csharp
+// In Program.cs or Startup.cs
+services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = Configuration["JwtIssuer"],
+            ValidAudience = Configuration["JwtAudience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtSecurityKey"]))
+        };
+    });
+```
+
+### Authorization Attributes
+
+```csharp
+// Controller level
+[Authorize]
+public class WordsController : ControllerBase
+{
+    // Only authenticated users can access
+}
+
+// Method level
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> DeleteWord(Guid id)
+{
+    // Only admins can delete words
+}
+
+// Allow anonymous access
+[AllowAnonymous]
+public async Task<IActionResult> GetPublicWords()
+{
+    // Anyone can access public words
+}
+```
+
+## Error Handling
+
+### Global Exception Handler
+
+```csharp
+// In Program.cs
+app.UseExceptionHandler(appBuilder =>
+{
+    appBuilder.Run(async context =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        var exception = exceptionHandlerPathFeature?.Error;
+        
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(exception, "Unhandled exception");
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        
+        var response = new
+        {
+            status = 500,
+            detail = "An error occurred while processing your request.",
+            instance = context.Request.Path
+        };
+        
+        await context.Response.WriteAsJsonAsync(response);
+    });
+});
+```
+
+### Custom Exception Middleware
+
+```csharp
+public class ErrorHandlingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ErrorHandlingMiddleware> _logger;
+
+    public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception");
+            await HandleExceptionAsync(context, ex);
+        }
+    }
+
+    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.ContentType = "application/json";
+        
+        var statusCode = exception switch
+        {
+            NotFoundException => StatusCodes.Status404NotFound,
+            ValidationException => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+            _ => StatusCodes.Status500InternalServerError
+        };
+        
+        context.Response.StatusCode = statusCode;
+        
+        return context.Response.WriteAsJsonAsync(new 
+        {
+            status = statusCode,
+            detail = exception.Message,
+            errors = GetErrors(exception)
+        });
+    }
+
+    private static IEnumerable<string> GetErrors(Exception exception)
+    {
+        if (exception is ValidationException validationException)
+        {
+            return validationException.Errors.Select(e => e.ErrorMessage);
+        }
+        
+        return new[] { exception.Message };
+    }
+}
+```
+
+## Performance Optimization
+
+### Async/Await
+
+Always use async/await for I/O operations:
+
+```csharp
+[HttpGet("{id}")]
+public async Task<IActionResult> GetById(Guid id)
+{
+    var result = await _mediator.Send(new GetWordByIdQuery { Id = id });
+    return result != null ? Ok(result) : NotFound();
+}
+```
+
+### Caching
+
+```csharp
+// In Program.cs or Startup.cs
+services.AddMemoryCache();
+
+// In controller
+[HttpGet]
+[ResponseCache(Duration = 60)] // Cache for 60 seconds
+public async Task<IActionResult> GetAll()
+{
+    var cacheKey = "all-words";
+    
+    if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<WordDto> words))
+    {
+        words = await _mediator.Send(new GetAllWordsQuery());
+        _memoryCache.Set(cacheKey, words, TimeSpan.FromMinutes(5));
+    }
+    
+    return Ok(words);
+}
+```
+
+### Pagination
+
+```csharp
+[HttpGet]
+public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+{
+    var query = new GetAllWordsQuery { Page = page, PageSize = pageSize };
+    var result = await _mediator.Send(query);
+    
+    return Ok(new 
+    {
+        items = result.Items,
+        totalCount = result.TotalCount,
+        page = result.Page,
+        pageSize = result.PageSize,
+        totalPages = result.TotalPages
+    });
+}
+```
+
+## Testing APIs
+
+```csharp
+public class WordsControllerTests
+{
+    [Fact]
+    public async Task GetAll_ShouldReturnOk_WithListOfWords()
+    {
+        // Arrange
+        var mediatorMock = new Mock<IMediator>();
+        var wordsList = new List<WordDto> { new() { Id = Guid.NewGuid(), English = "Test" } };
+        mediatorMock.Setup(m => m.Send(It.IsAny<GetAllWordsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(wordsList);
+            
+        var controller = new WordsController(mediatorMock.Object);
+        
+        // Act
+        var result = await controller.GetAll();
+        
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnValue = Assert.IsType<List<WordDto>>(okResult.Value);
+        Assert.Single(returnValue);
+    }
+}
+

@@ -1,0 +1,132 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Backend Clean Architecture & .NET Development Standards
+
+The backend of this application follows Clean Architecture principles with the following layers:
+
+## 1. Domain Layer (EnglishVocab.Domain)
+
+- **Core business logic and entities**
+- No dependencies on other layers or external frameworks
+- Contains:
+  - Entities ([BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/BaseEntity.cs), [User.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/User.cs), etc.)
+  - Value Objects
+  - Enums ([DifficultyLevel.cs](mdc:src/Backend/EnglishVocab.Domain/Enums/DifficultyLevel.cs), etc.)
+  - Domain Events
+  - Domain Exceptions
+
+## 2. Application Layer (EnglishVocab.Application)
+
+- **Use cases and application business rules**
+- Depends only on the Domain layer
+- Implements CQRS pattern (Command Query Responsibility Segregation):
+  - Commands: modifying data
+  - Queries: retrieving data
+- Contains:
+  - Command/Query Handlers
+  - DTOs (Data Transfer Objects)
+  - Interface definitions for infrastructure services
+  - Validation logic
+
+## 3. Infrastructure Layer (EnglishVocab.Infrastructure)
+
+- **Technical details and implementations**
+- Depends on Application and Domain layers
+- Contains:
+  - Database context and migrations
+  - Repository implementations
+  - External services implementation
+  - Authentication services
+  - Caching
+  - Logging
+
+## 4. Presentation Layer (EnglishVocab.API)
+
+- **API endpoints**
+- Depends on Application layer (not on Infrastructure or Domain directly)
+- Contains:
+  - API Controllers
+  - Middleware
+  - Filters
+  - Configuration
+
+## Dependency Flow
+
+```
+API Layer → Application Layer → Domain Layer
+              ↑                    ↑
+              |                    |
+       Infrastructure Layer -------+
+```
+
+## .NET Code Style and Structure
+
+- Write concise, idiomatic C# code following Microsoft conventions
+- Structure code according to Clean Architecture principles
+- Use object-oriented and functional programming patterns as appropriate
+- Prefer LINQ and lambda expressions for collection operations
+- Follow .NET and ASP.NET Core conventions and best practices
+
+### Naming Conventions
+
+- **PascalCase**: Class names, method names, public members, and properties
+  - `public class UserService`, `public void CalculateTotal()`
+- **camelCase**: Local variables and private fields
+  - `private readonly userRepository`, `var wordCount = 0;`
+- **UPPERCASE**: Constants
+  - `private const string DEFAULT_CONNECTION = "DefaultConnection";`
+- **Interface prefix with "I"**
+  - `public interface IUserService`, `public interface IWordRepository`
+
+### C# Best Practices
+
+- Use C# 10+ features (record types, pattern matching, null-coalescing assignment)
+- Use `var` for implicit typing when type is obvious
+- Use string interpolation instead of string concatenation
+- Use nullable reference types and handle nulls appropriately
+- Implement proper error handling with exceptions
+- Use async/await for I/O-bound operations
+
+## Architecture Guidelines
+
+1. **Dependencies point inward**
+   - Outer layers depend on inner layers, never the reverse
+   - Use dependency injection for loose coupling
+
+2. **Domain Layer Independence**
+   - Domain layer must be framework-agnostic
+   - No references to UI, database, or external services
+
+3. **Communication between layers**
+   - Use interfaces defined in the Application layer
+   - Implement Repository Pattern for data access
+   - Use AutoMapper for object-object mapping
+
+4. **API Design Principles**
+   - Follow RESTful API design guidelines
+   - Use attribute routing in controllers
+   - Implement versioning for APIs
+   - Return appropriate HTTP status codes
+
+5. **Testing Approach**
+   - Write unit tests using xUnit
+   - Use Moq for mocking dependencies
+   - Implement integration tests for API endpoints
+
+## Security Best Practices
+
+- Implement JWT authentication for API authentication
+- Use proper authorization attributes on controllers and methods
+- Enforce HTTPS and SSL
+- Implement proper CORS policies
+- Use secure password hashing (BCrypt, PBKDF2, etc.)
+
+## Performance Considerations
+
+- Use asynchronous programming with async/await
+- Implement caching with IMemoryCache or distributed caching
+- Avoid N+1 query problems through proper Entity Framework usage
+- Implement pagination for large data sets

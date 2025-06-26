@@ -1,0 +1,80 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# English Vocabulary App - Project Overview
+
+This application is designed to help users learn English vocabulary through a flashcard system with spaced repetition. It follows a clean architecture approach with separate frontend and backend components.
+
+## Project Structure
+
+```
+EnglishVocabApp/
+├── src/
+│   ├── Backend/                   # .NET Core backend
+│   │   ├── EnglishVocab.API/      # API Layer
+│   │   ├── EnglishVocab.Application/ # Application Layer
+│   │   ├── EnglishVocab.Domain/   # Domain Layer
+│   │   ├── EnglishVocab.Infrastructure/ # Infrastructure Layer
+│   │   └── EnglishVocab.Tests/    # Test Projects
+│   │
+│   └── Frontend/                  # React frontend
+│       ├── public/
+│       └── src/
+│           ├── components/
+│           ├── pages/
+│           ├── hooks/
+│           └── services/
+│
+└── docs/                          # Documentation
+    └── plan.md                    # Project plan
+```
+
+## Key Features
+
+1. User Authentication
+   - Registration and login
+   - JWT token authentication
+
+2. Word Management
+   - Create, update, and delete words
+   - Organize words into word sets
+   - Import/export word sets
+
+3. Flashcard Study System
+   - Study sessions with flashcards
+   - Track progress for each word
+   - Multiple study modes (flashcards, quiz, etc.)
+
+4. Spaced Repetition Algorithm
+   - Schedule words for review based on learning progress
+   - Optimize learning efficiency
+
+5. Progress Tracking
+   - Track mastery level for each word
+   - View study statistics and progress reports
+
+## Technology Stack
+
+### Backend
+- .NET Core 9
+- Entity Framework Core
+- MediatR (CQRS implementation)
+- SQL Server / PostgreSQL
+- JWT Authentication
+
+### Frontend
+- React 18+
+- TypeScript
+- React Router
+- Axios for API communication
+- CSS Modules / Tailwind CSS
+
+## Development Guidelines
+
+Refer to specific rules for detailed guidelines:
+
+- Backend: See [Backend Clean Architecture](.cursor/rules/backend/clean-architecture.mdc)
+- Frontend: See [Frontend React Structure](.cursor/rules/frontend/react-structure.mdc)
+- Running the application: See backend and frontend specific running instructions

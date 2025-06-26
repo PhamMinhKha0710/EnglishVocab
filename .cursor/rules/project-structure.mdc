@@ -1,0 +1,57 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Project Structure
+
+The English Vocabulary App follows a clean architecture approach with separate frontend and backend structures.
+
+## Backend (.NET Core 9)
+
+The backend follows Clean Architecture principles with the following layers:
+
+- **Domain Layer** - Contains business entities and logic
+  - Core entities: [User.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/User.cs), [Word.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/Word.cs), [WordSet.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/WordSet.cs)
+  - Base types: [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/BaseEntity.cs)
+  - Enums: [DifficultyLevel.cs](mdc:src/Backend/EnglishVocab.Domain/Enums/DifficultyLevel.cs), [MasteryLevel.cs](mdc:src/Backend/EnglishVocab.Domain/Enums/MasteryLevel.cs)
+
+- **Application Layer** - Contains application use cases and business rules
+  - Features organized by domain functions (Auth, Words, WordSets, etc.)
+  - Each feature has Commands, Queries, and Handlers following CQRS pattern
+
+- **Infrastructure Layer** - Implements interfaces defined in the Application layer
+  - Database context and repositories
+  - External services (Email, File handling, etc.)
+
+- **API Layer** - Web API controllers and endpoints
+  - REST API controllers for each domain entity
+  - Authentication middleware
+  - Swagger documentation
+
+## Frontend (React with TypeScript)
+
+The frontend is organized as follows:
+
+- **components/** - UI components grouped by feature
+  - common/ - Reusable components
+  - auth/ - Authentication related components
+  - flashcard/ - Flashcard study components
+  - words/ - Word management components
+  - dashboard/ - User dashboard components
+
+- **pages/** - Page components that compose multiple components
+
+- **hooks/** - Custom React hooks
+
+- **services/** - API clients and services
+
+- **types/** - TypeScript type definitions
+
+- **utils/** - Helper functions and utilities
+
+## Development Guidelines
+
+- Backend changes should follow Clean Architecture principles
+- Frontend components should be functional with hooks
+- Follow the existing folder structure when adding new features

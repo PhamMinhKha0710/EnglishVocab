@@ -1,0 +1,218 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Running the Backend Application & .NET Development Workflow
+
+This document provides instructions on how to run the backend (.NET Core) components of the English Vocabulary App and outlines the .NET development workflow.
+
+## First-time Setup
+
+1. Navigate to the Backend directory:
+   ```
+   cd src/Backend
+   ```
+
+2. Build the solution:
+   ```
+   dotnet build EnglishVocabApp.sln
+   ```
+
+3. Add Entity Framework migrations (once the DbContext is created):
+   ```
+   dotnet ef migrations add InitialCreate --project EnglishVocab.Infrastructure --startup-project EnglishVocab.API
+   ```
+
+4. Run database migrations:
+   ```
+   dotnet ef database update --project EnglishVocab.Infrastructure --startup-project EnglishVocab.API
+   ```
+
+## Running the API
+
+Run the API project:
+```
+dotnet run --project EnglishVocab.API
+```
+
+For development with hot reload:
+```
+dotnet watch run --project EnglishVocab.API
+```
+
+The API will be available at:
+- https://localhost:5001
+- http://localhost:5000
+
+Swagger documentation will be available at:
+- https://localhost:5001/swagger
+- http://localhost:5000/swagger
+
+## Development Workflow
+
+### 1. Development Cycle
+
+1. Make changes to code
+2. Build solution (`dotnet build`)
+3. Run tests (`dotnet test`)
+4. Run the application (`dotnet run`)
+5. Test endpoints using Swagger or Postman
+
+### 2. Adding New Features
+
+1. Define entity in Domain Layer
+2. Create Command/Query in Application Layer
+3. Implement Handler in Application Layer
+4. Update DbContext and Repository in Infrastructure Layer
+5. Create Controller endpoint in API Layer
+
+### 3. .NET API Development Standards
+
+#### Setting Up API Controllers
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+public class WordsController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public WordsController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<WordDto>>> GetAllWords()
+    {
+        var result = await _mediator.Send(new GetWordsQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WordDto>> GetWord(Guid id)
+    {
+        var result = await _mediator.Send(new GetWordByIdQuery { Id = id });
+        
+        if (result == null)
+            return NotFound();
+            
+        return Ok(result);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<WordDto>> CreateWord([FromBody] CreateWordCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetWord), new { id = result.Id }, result);
+    }
+}
+```
+
+#### API Response Format
+
+Use a consistent response format for all API endpoints:
+
+```csharp
+public class ApiResponse<T>
+{
+    public bool IsSuccess { get; set; }
+    public T Data { get; set; }
+    public string Message { get; set; }
+    public List<string> Errors { get; set; } = new List<string>();
+}
+```
+
+#### Error Handling
+
+Implement a global exception handler middleware:
+
+```csharp
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        
+        var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+        if (contextFeature != null)
+        {
+            // Log the error
+            logger.LogError(contextFeature.Error, "An unhandled exception has occurred.");
+            
+            // Return error details
+            await context.Response.WriteAsync(new
+            {
+                StatusCode = context.Response.StatusCode,
+                Message = "Internal Server Error. Please try again later."
+            }.ToString());
+        }
+    });
+});
+```
+
+## Testing
+
+### Unit Testing with xUnit
+
+Run the tests:
+```
+dotnet test
+```
+
+Example test structure:
+```csharp
+public class WordServiceTests
+{
+    private readonly Mock<IWordRepository> _mockRepository;
+    private readonly IWordService _wordService;
+    
+    public WordServiceTests()
+    {
+        _mockRepository = new Mock<IWordRepository>();
+        _wordService = new WordService(_mockRepository.Object);
+    }
+    
+    [Fact]
+    public async Task GetWordById_ShouldReturnWord_WhenWordExists()
+    {
+        // Arrange
+        var wordId = Guid.NewGuid();
+        var word = new Word { Id = wordId, English = "Test", Vietnamese = "Kiểm tra" };
+        _mockRepository.Setup(repo => repo.GetByIdAsync(wordId)).ReturnsAsync(word);
+        
+        // Act
+        var result = await _wordService.GetWordByIdAsync(wordId);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(wordId, result.Id);
+        Assert.Equal("Test", result.English);
+    }
+}
+```
+
+## Production Build
+
+Build the backend for production:
+```
+dotnet publish -c Release -o ./publish EnglishVocab.API
+```
+
+The production build will be in the `publish` directory, ready to be deployed.
+
+## Common CLI Commands
+
+- Create a new project: `dotnet new [template] -o [ProjectName]`
+- Add a package: `dotnet add package [PackageName]`
+- Add a project reference: `dotnet add reference [ProjectPath]`
+- Run tests: `dotnet test`
+- Apply migrations: `dotnet ef database update`

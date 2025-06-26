@@ -1,0 +1,287 @@
+# Frontend React Architecture & Best Practices
+
+This document outlines the React architecture and best practices for the English Vocabulary App frontend.
+
+## Project Structure
+
+The frontend is organized using a feature-based architecture:
+
+```
+src/Frontend/
+├── node_modules/
+├── public/
+├── src/
+│   ├── assets/             # Static assets (images, fonts, etc.)
+│   ├── components/         # Shared components
+│   │   ├── common/         # App-wide reusable components
+│   │   │   ├── Button/
+│   │   │   ├── Input/
+│   │   │   └── ...
+│   │   └── layouts/        # Layout components
+│   ├── features/           # Feature-based modules
+│   │   ├── auth/           # Authentication feature
+│   │   ├── flashcards/     # Flashcard study feature
+│   │   ├── words/          # Word management feature
+│   │   └── dashboard/      # Dashboard feature
+│   ├── hooks/              # Custom React hooks
+│   ├── services/           # API clients and services
+│   ├── store/              # State management
+│   ├── types/              # TypeScript type definitions
+│   ├── utils/              # Utility functions
+│   ├── App.tsx             # Main App component
+│   └── index.tsx           # Entry point
+├── .eslintrc.js            # ESLint configuration
+├── tailwind.config.js      # TailwindCSS configuration
+├── tsconfig.json           # TypeScript configuration
+└── package.json            # Dependencies and scripts
+```
+
+## Component Architecture
+
+### Component Organization
+
+Each component should follow this structure:
+
+```
+ComponentName/
+├── ComponentName.tsx       # Component implementation
+├── ComponentName.test.tsx  # Tests (optional)
+└── index.ts                # Barrel file for clean imports
+```
+
+### Component Implementation Guidelines
+
+- Use functional components with React hooks
+- Follow the single responsibility principle
+- Separate UI from business logic
+- Use TypeScript for component props and state
+
+```tsx
+// Example component structure
+import React, { useState } from 'react';
+import { Button } from '@/components/common/Button';
+
+type WordCardProps = {
+  word: string;
+  translation: string;
+  example?: string;
+  onMark: (correct: boolean) => void;
+};
+
+export const WordCard: React.FC<WordCardProps> = ({
+  word,
+  translation,
+  example,
+  onMark
+}) => {
+  const [showTranslation, setShowTranslation] = useState(false);
+  
+  const handleToggle = () => {
+    setShowTranslation(!showTranslation);
+  };
+  
+  const handleMarkCorrect = () => {
+    onMark(true);
+  };
+  
+  const handleMarkIncorrect = () => {
+    onMark(false);
+  };
+
+  return (
+    <div className="p-4 bg-white rounded-lg shadow-md">
+      <h3 className="text-xl font-medium">{word}</h3>
+      
+      {showTranslation ? (
+        <p className="mt-2">{translation}</p>
+      ) : (
+        <button 
+          className="mt-2 text-blue-500 hover:underline"
+          onClick={handleToggle}
+          onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
+          aria-label="Show translation"
+          tabIndex={0}
+        >
+          Show translation
+        </button>
+      )}
+      
+      {example && (
+        <p className="mt-2 text-gray-600 italic">"{example}"</p>
+      )}
+      
+      <div className="flex mt-4 space-x-2">
+        <Button 
+          onClick={handleMarkCorrect}
+          aria-label="Mark as correct"
+        >
+          I knew it
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleMarkIncorrect}
+          aria-label="Mark as incorrect"
+        >
+          Still learning
+        </Button>
+      </div>
+    </div>
+  );
+};
+```
+
+## Styling Approach
+
+Use TailwindCSS for styling components:
+
+- Prefer Tailwind utility classes over custom CSS
+- Use class conditionals for dynamic styling
+- Extract common class combinations into components
+
+```tsx
+// Example of conditional classes
+<div 
+  className={`
+    p-4 rounded-md
+    ${isActive ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}
+  `}
+>
+  Content
+</div>
+
+// Better approach with class conditionals
+<div 
+  className="p-4 rounded-md"
+  class:bg-blue-500={isActive}
+  class:text-white={isActive}
+  class:bg-gray-100={!isActive}
+  class:text-gray-800={!isActive}
+>
+  Content
+</div>
+```
+
+## Code Style Guidelines
+
+### General Principles
+
+1. **Readability First**
+   - Use early returns to reduce nesting
+   - Prefer declarative over imperative code
+   - Keep functions small and focused
+
+2. **Component Structure**
+   - Props destructuring at the top
+   - State declarations next
+   - Handler functions after state
+   - Effects after handlers
+   - Return JSX last
+
+3. **Naming Conventions**
+   - Use descriptive variable and function names
+   - Prefix event handlers with 'handle' (e.g., handleClick)
+   - PascalCase for components
+   - camelCase for functions and variables
+
+4. **TypeScript Best Practices**
+   - Define types for all props
+   - Use interfaces for complex objects
+   - Leverage TypeScript's inference where appropriate
+
+### Example Implementation
+
+```tsx
+// Good example
+import React, { useState, useEffect } from 'react';
+import { Word } from '@/types';
+import { wordService } from '@/services';
+
+type WordListProps = {
+  initialWords?: Word[];
+  filter?: string;
+  onSelect: (word: Word) => void;
+};
+
+export const WordList: React.FC<WordListProps> = ({
+  initialWords = [],
+  filter = '',
+  onSelect
+}) => {
+  const [words, setWords] = useState<Word[]>(initialWords);
+  const [loading, setLoading] = useState<boolean>(initialWords.length === 0);
+  
+  const handleSelect = (word: Word) => {
+    onSelect(word);
+  };
+  
+  useEffect(() => {
+    if (initialWords.length > 0) {
+      setWords(initialWords);
+      return;
+    }
+    
+    const fetchWords = async () => {
+      setLoading(true);
+      try {
+        const data = await wordService.getWords(filter);
+        setWords(data);
+      } catch (error) {
+        console.error('Failed to fetch words:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchWords();
+  }, [filter, initialWords]);
+
+  if (loading) {
+    return <div className="p-4">Loading words...</div>;
+  }
+  
+  if (words.length === 0) {
+    return <div className="p-4">No words found.</div>;
+  }
+  
+  return (
+    <ul className="divide-y divide-gray-200">
+      {words.map(word => (
+        <li 
+          key={word.id}
+          className="p-4 hover:bg-gray-50 cursor-pointer"
+          onClick={() => handleSelect(word)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSelect(word)}
+          tabIndex={0}
+          aria-label={`Select word: ${word.english}`}
+        >
+          <div className="font-medium">{word.english}</div>
+          <div className="text-sm text-gray-600">{word.vietnamese}</div>
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+## Accessibility Guidelines
+
+Always implement accessibility features:
+
+- Use semantic HTML elements
+- Add appropriate ARIA attributes
+- Ensure keyboard navigation works
+- Maintain sufficient color contrast
+- Include focus indicators
+
+```tsx
+// Accessible button example
+<button
+  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  onClick={handleClick}
+  onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+  tabIndex={0}
+  aria-label="Add new word"
+>
+  Add Word
+</button>
+```

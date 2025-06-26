@@ -1,0 +1,70 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Domain Model and Entity Relationships
+
+This document describes the core domain entities and their relationships in the English Vocabulary App.
+
+## Core Entities
+
+### User
+- Represents an application user
+- Properties: Email, PasswordHash, FirstName, LastName, IsActive
+- Relationships:
+  - One-to-Many with WordSets (a user can have multiple word sets)
+  - One-to-Many with UserProgress (tracks user's progress for words)
+  - One-to-Many with StudySessions (tracks study sessions)
+
+### Word
+- Represents a vocabulary word to learn
+- Properties: English, Vietnamese, Pronunciation, Example, Notes, ImageUrl, AudioUrl, DifficultyLevel
+- Relationships:
+  - Many-to-One with WordSet (a word belongs to a word set)
+  - One-to-Many with UserProgress (tracks progress of users learning this word)
+
+### WordSet
+- Represents a collection of related words
+- Properties: Name, Description, IsPublic
+- Relationships:
+  - Many-to-One with User (created by a user)
+  - One-to-Many with Words (contains multiple words)
+
+### UserProgress
+- Tracks a user's progress for a specific word
+- Properties: MasteryLevel, CorrectCount, IncorrectCount, LastReviewed, NextReviewDate
+- Relationships:
+  - Many-to-One with User
+  - Many-to-One with Word
+
+### StudySession
+- Tracks a study session by a user
+- Properties: StartTime, EndTime, WordsStudied, CorrectAnswers, IncorrectAnswers, StudyMode
+- Relationships:
+  - Many-to-One with User
+
+## Enums
+
+### DifficultyLevel
+- Easy, Medium, Hard, VeryHard
+
+### MasteryLevel
+- New, Learning, Familiar, Mastered
+
+### StudyMode
+- Flashcards, Quiz, SpellingTest, MatchingGame
+
+## Entity Diagram
+
+```
+User 1 --- * WordSet
+User 1 --- * UserProgress
+User 1 --- * StudySession
+WordSet 1 --- * Word
+Word 1 --- * UserProgress
+```
+
+## Implementation Details
+
+All entities inherit from [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/BaseEntity.cs) which provides common properties like Id, CreatedAt, and UpdatedAt.

@@ -1,0 +1,477 @@
+# Frontend Technology Stack
+
+This document outlines the technologies used in the English Vocabulary App frontend and the development standards for each.
+
+## Primary Technologies
+
+### React/Next.js + TypeScript
+
+The application is built with:
+- **React 18+** for UI components
+- **Next.js** for server-side rendering and routing (when applicable)
+- **TypeScript** for type safety
+
+### Styling
+
+- **TailwindCSS** as the primary styling solution
+- No custom CSS files (Tailwind utility classes only)
+- Component-based styling
+
+### State Management
+
+- **React Query** for server state
+- **React Context API** for global UI state
+- Local component state for component-specific state
+
+### Form Handling
+
+- **React Hook Form** for form state management
+- **Zod** for schema validation
+
+## Development Patterns
+
+### React Component Types
+
+We use functional components with hooks:
+
+```tsx
+import React, { useState } from 'react';
+
+type ButtonProps = {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary' | 'outline';
+  disabled?: boolean;
+};
+
+export const Button: React.FC<ButtonProps> = ({
+  label,
+  onClick,
+  variant = 'primary',
+  disabled = false
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+  
+  const handleClick = () => {
+    if (!disabled) {
+      onClick();
+    }
+  };
+  
+  return (
+    <button
+      className={`
+        px-4 py-2 rounded-md font-medium transition-colors
+        focus:outline-none focus:ring-2 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${variant === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500' : ''}
+        ${variant === 'secondary' ? 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500' : ''}
+        ${variant === 'outline' ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500' : ''}
+      `}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      disabled={disabled}
+      aria-disabled={disabled}
+      aria-label={label}
+      tabIndex={disabled ? -1 : 0}
+    >
+      {label}
+    </button>
+  );
+};
+```
+
+### TypeScript Standards
+
+1. **Use explicit typing**:
+   - Define interfaces/types for all props
+   - Avoid using `any` type
+   - Use generics for reusable components
+
+2. **Type Organization**:
+   - Place shared types in `src/types` directory
+   - Co-locate component-specific types with components
+   - Use barrel exports (index.ts files) for clean imports
+
+3. **Type Examples**:
+
+```tsx
+// Entity types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'user' | 'admin';
+}
+
+// Component prop types
+export type DataTableProps<T> = {
+  data: T[];
+  columns: Column<T>[];
+  isLoading?: boolean;
+  onRowClick?: (item: T) => void;
+};
+
+// Function types
+export type SortFunction<T> = (a: T, b: T) => number;
+
+// Utility types
+export type Nullable<T> = T | null;
+export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+```
+
+### Code Structure
+
+1. **File Organization**:
+   - One component per file
+   - Use index files for clean exports
+   - Group related components in directories
+
+2. **Import Order**:
+   - React and 3rd party libraries first
+   - Project imports second, sorted by path depth
+   - Type imports last
+
+```tsx
+// 1. React and libraries
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+// 2. Project imports
+import { Button } from '@/components/common/Button';
+import { useAuth } from '@/hooks/useAuth';
+import { wordService } from '@/services/wordService';
+
+// 3. Types
+import type { Word } from '@/types';
+```
+
+## Code Style Guidelines
+
+### Naming Conventions
+
+1. **Component Names**: PascalCase
+   - `WordList.tsx`, `StudySession.tsx`
+
+2. **Hooks**: camelCase, prefixed with "use"
+   - `useAuth.ts`, `useWordProgress.ts`
+
+3. **Util Functions**: camelCase
+   - `formatDate.ts`, `calculateScore.ts`
+
+4. **Event Handlers**: camelCase, prefixed with "handle"
+   - `handleClick`, `handleSubmit`, `handleInputChange`
+
+5. **Boolean Variables**: prefixed with "is", "has", "should", etc.
+   - `isLoading`, `hasError`, `shouldRefetch`
+
+### TailwindCSS Guidelines
+
+1. **Class Organization**:
+   - Layout properties first (position, display, width, height)
+   - Typography styles second (font, text)
+   - Visual styles third (colors, borders, shadows)
+   - Interactive states last (hover, focus)
+
+```tsx
+<div className="
+  flex justify-between items-center w-full p-4 
+  font-medium text-lg 
+  bg-white border-b border-gray-200 
+  hover:bg-gray-50
+">
+  Content
+</div>
+```
+
+2. **Responsive Design**:
+   - Mobile-first approach
+   - Use Tailwind's responsive prefixes
+   - Group breakpoints together
+
+```tsx
+<div className="
+  grid 
+  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 
+  gap-4 md:gap-6 lg:gap-8
+">
+  {items.map(item => (
+    <Card key={item.id} item={item} />
+  ))}
+</div>
+```
+
+3. **Dynamic Classes**:
+   - Use class conditionals over ternary operators
+   - Extract complex conditional logic to variables
+
+```tsx
+// Prefer this
+<button 
+  className="px-4 py-2 rounded-md"
+  class:bg-blue-600={isActive}
+  class:text-white={isActive}
+  class:bg-gray-100={!isActive}
+  class:text-gray-800={!isActive}
+>
+  {label}
+</button>
+
+// Instead of this
+<button className={`
+  px-4 py-2 rounded-md 
+  ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}
+`}>
+  {label}
+</button>
+```
+
+### React Hooks Best Practices
+
+1. **useState**:
+   - Use functional updates for state that depends on previous state
+   - Use object spread for updating object state
+
+```tsx
+// Functional update for previous state dependency
+const [count, setCount] = useState(0);
+const increment = () => setCount(prevCount => prevCount + 1);
+
+// Object spread for object state
+const [user, setUser] = useState({ name: '', email: '' });
+const updateName = (name) => setUser(prev => ({ ...prev, name }));
+```
+
+2. **useEffect**:
+   - Include all dependencies in the dependency array
+   - Clean up side effects properly
+   - Avoid unnecessary effects
+
+```tsx
+useEffect(() => {
+  // Only run when id changes
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const data = await api.fetch(id);
+      setData(data);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchData();
+}, [id]); // Only dependency is id
+```
+
+3. **Custom Hooks**:
+   - Create custom hooks for reusable logic
+   - Name them with "use" prefix
+   - Keep them focused on a single responsibility
+
+```tsx
+// Custom hook for window size
+const useWindowSize = () => {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    // Set initial size
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return size;
+};
+```
+
+## Performance Optimization
+
+1. **Use Memoization**:
+   - `React.memo` for components that render often with the same props
+   - `useMemo` for expensive calculations
+   - `useCallback` for functions passed to child components
+
+```tsx
+// Memoize expensive calculation
+const sortedItems = useMemo(() => {
+  return [...items].sort((a, b) => a.name.localeCompare(b.name));
+}, [items]);
+
+// Memoize callback function
+const handleItemClick = useCallback((id) => {
+  setSelectedId(id);
+  onSelect?.(id);
+}, [onSelect]);
+```
+
+2. **Code Splitting**:
+   - Use dynamic imports for route-based code splitting
+   - Lazy load components that are not needed immediately
+
+```tsx
+// Lazy load a component
+const LazyComponent = React.lazy(() => import('./LazyComponent'));
+
+// Use Suspense for loading state
+const MyComponent = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <LazyComponent />
+  </Suspense>
+);
+```
+
+3. **Early Returns**:
+   - Use early returns to avoid unnecessary rendering
+   - Return loading and error states early
+
+```tsx
+const ProductDetails = ({ productId }) => {
+  const { data, isLoading, error } = useProduct(productId);
+  
+  if (isLoading) {
+    return <div className="p-4">Loading product details...</div>;
+  }
+  
+  if (error) {
+    return <div className="p-4 text-red-500">Error loading product: {error.message}</div>;
+  }
+  
+  if (!data) {
+    return <div className="p-4">Product not found</div>;
+  }
+  
+  // Main component render
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">{data.name}</h1>
+      <p className="mt-2">{data.description}</p>
+      <div className="mt-4 font-bold">${data.price.toFixed(2)}</div>
+    </div>
+  );
+};
+```
+
+## Accessibility Guidelines
+
+1. **Semantic HTML**:
+   - Use appropriate HTML elements for their intended purpose
+   - Use heading hierarchy correctly (h1, h2, h3, etc.)
+   - Use landmarks (header, main, nav, footer)
+
+2. **ARIA Attributes**:
+   - Add aria-label for elements without visible text
+   - Use aria-describedby to associate descriptions
+   - Use aria-expanded for toggleable content
+
+3. **Keyboard Navigation**:
+   - Ensure all interactive elements are keyboard accessible
+   - Use tabIndex properly
+   - Add keyboard event handlers (onKeyDown)
+
+4. **Focus Management**:
+   - Provide visible focus indicators
+   - Manage focus for modals and dialogs
+   - Restore focus when components unmount
+
+5. **Example**:
+
+```tsx
+const ToggleButton = ({ label, expanded, onChange }) => {
+  const handleToggle = () => {
+    onChange(!expanded);
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle();
+    }
+  };
+  
+  return (
+    <button
+      className="px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      onClick={handleToggle}
+      onKeyDown={handleKeyDown}
+      aria-expanded={expanded}
+      aria-label={label}
+      tabIndex={0}
+    >
+      {label}
+      <svg 
+        className={`ml-2 h-5 w-5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  );
+};
+```
+
+## Ghost CMS Integration (When Applicable)
+
+When the application requires CMS integration, we use Ghost as our headless CMS platform:
+
+1. **Content API Integration**:
+   ```tsx
+   // Fetch content from Ghost API
+   const fetchPosts = async () => {
+     const apiUrl = `${process.env.NEXT_PUBLIC_GHOST_URL}/ghost/api/content/posts/`;
+     const params = new URLSearchParams({
+       key: process.env.NEXT_PUBLIC_GHOST_CONTENT_KEY,
+       limit: '10',
+       include: 'tags,authors',
+       fields: 'title,slug,feature_image,excerpt,published_at'
+     });
+     
+     const response = await fetch(`${apiUrl}?${params}`);
+     const data = await response.json();
+     return data.posts;
+   };
+   ```
+
+2. **Use with React Query**:
+   ```tsx
+   const { data: posts, isLoading, error } = useQuery(['posts'], fetchPosts);
+   ```
+
+3. **Content Rendering**:
+   ```tsx
+   // Handle HTML content from Ghost
+   const PostContent = ({ html }) => (
+     <div 
+       className="prose max-w-none" 
+       dangerouslySetInnerHTML={{ __html: html }}
+     />
+   );
+   ```
+
+By following these guidelines and patterns, we ensure a consistent, maintainable, and high-quality frontend codebase.
+

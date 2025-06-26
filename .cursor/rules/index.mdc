@@ -1,0 +1,65 @@
+# English Vocabulary App Development Guidelines
+
+This document serves as an index to all development guidelines and rules for the English Vocabulary App.
+
+## Backend Rules (.NET Core)
+
+- [Domain Model & C# Implementation Standards](mdc:.cursor/rules/backend/domain-model.mdc) - Core entities, relationships, and C# implementation guidelines
+- [Clean Architecture & .NET Development Standards](mdc:.cursor/rules/backend/clean-architecture.mdc) - Architecture layers, dependency flow, and C# best practices
+- [Running the Backend Application](mdc:.cursor/rules/backend/running-backend.mdc) - Instructions for running and developing the backend
+- [API Standards](mdc:.cursor/rules/backend/api-standards.mdc) - RESTful API design principles, validation, security, and performance
+
+## Frontend Rules (React/TypeScript)
+
+- [React Architecture & Best Practices](mdc:.cursor/rules/frontend/react-structure.mdc) - React component structure, styling approach, and code organization
+- [TypeScript Models & API Integration](mdc:.cursor/rules/frontend/frontend-models.mdc) - TypeScript models, API clients, and data fetching patterns
+- [Running the Frontend Application](mdc:.cursor/rules/frontend/running-frontend.mdc) - Instructions for running and developing the frontend
+- [Technology Stack](mdc:.cursor/rules/frontend/tech-stack.mdc) - Overview of frontend technologies and development patterns
+- [Ghost CMS Development](mdc:.cursor/rules/frontend/ghost-cms-development.mdc) - Guidelines for Ghost CMS theme development (when applicable)
+
+## Project Overview
+
+### Application Purpose
+
+The English Vocabulary App is designed to help users learn and practice English vocabulary:
+
+- Users can create and manage word lists
+- Study vocabulary with flashcards and other study modes
+- Track progress for each word
+- Analyze study sessions and progress over time
+
+### Technology Stack
+
+- **Backend**: .NET Core 9 with Clean Architecture
+- **Frontend**: React with TypeScript, TailwindCSS
+- **Database**: SQL Server / PostgreSQL
+- **Authentication**: JWT-based authentication
+- **API**: RESTful API with CQRS pattern
+
+### Development Workflow
+
+1. Check out the relevant branch from Git
+2. Follow the running instructions for [backend](mdc:.cursor/rules/backend/running-backend.mdc) and [frontend](mdc:.cursor/rules/frontend/running-frontend.mdc)
+3. Create feature branches for new development
+4. Follow the coding standards for each technology
+5. Run tests before submitting pull requests
+6. Use CI/CD pipeline for deployment
+
+### Repository Structure
+
+```
+EnglishVocabApp/
+├── docs/                    # Documentation
+├── scripts/                 # Build and deployment scripts
+├── src/                     # Source code
+│   ├── Backend/             # .NET Core backend
+│   │   ├── EnglishVocab.API/             # API layer
+│   │   ├── EnglishVocab.Application/     # Application layer
+│   │   ├── EnglishVocab.Domain/          # Domain layer
+│   │   ├── EnglishVocab.Infrastructure/  # Infrastructure layer
+│   │   └── EnglishVocab.Tests/           # Test projects
+│   └── Frontend/            # React frontend
+│       ├── public/          # Static assets
+│       └── src/             # React source code
+└── .cursor/                 # Cursor IDE configurations and rules
+```

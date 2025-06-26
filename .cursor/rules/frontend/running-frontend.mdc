@@ -1,0 +1,412 @@
+# Running the Frontend Application & Development Workflow
+
+This document provides instructions on how to run the frontend (React) components of the English Vocabulary App and outlines the development workflow.
+
+## First-time Setup
+
+1. Navigate to the Frontend directory:
+   ```
+   cd src/Frontend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+   If you encounter execution policy restrictions in PowerShell, you can temporarily bypass them:
+   ```
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   npm install
+   ```
+
+3. Create necessary environment files:
+   ```
+   # Create .env file for API URL
+   echo "REACT_APP_API_URL=https://localhost:5001" > .env
+   ```
+
+## Running the Application
+
+### Development Mode
+
+Start the development server:
+```
+npm run dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000) and will auto-reload when you make changes.
+
+### Production Build
+
+Build the application for production:
+```
+npm run build
+```
+
+Serve the production build locally:
+```
+npm run serve
+```
+
+## Frontend Development Workflow
+
+### 1. Development Cycle
+
+1. Make changes to code
+2. Save files (live reload will refresh the application)
+3. Test functionality in the browser
+4. Fix any issues
+5. Commit changes
+
+### 2. Adding New Features
+
+1. Create necessary TypeScript interfaces in `src/types`
+2. Implement API services in `src/services`
+3. Create React components in appropriate directories
+4. Update routing if needed
+5. Test the feature
+
+## React & TypeScript Best Practices
+
+### Component Structure
+
+```tsx
+// Example feature component structure
+import React, { useState } from 'react';
+import { Word } from '@/types';
+import { Button } from '@/components/common/Button';
+
+type FlashcardProps = {
+  word: Word;
+  onNext: () => void;
+  onMarkResult: (wordId: string, correct: boolean) => void;
+};
+
+export const Flashcard: React.FC<FlashcardProps> = ({
+  word,
+  onNext,
+  onMarkResult
+}) => {
+  const [showAnswer, setShowAnswer] = useState(false);
+  
+  const handleToggle = () => {
+    setShowAnswer(prev => !prev);
+  };
+  
+  const handleCorrect = () => {
+    onMarkResult(word.id, true);
+    setShowAnswer(false);
+    onNext();
+  };
+  
+  const handleIncorrect = () => {
+    onMarkResult(word.id, false);
+    setShowAnswer(false);
+    onNext();
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-xl shadow-md max-w-md mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-center mb-2">{word.english}</h2>
+        {word.pronunciation && (
+          <p className="text-gray-500 text-center italic">{word.pronunciation}</p>
+        )}
+      </div>
+      
+      {showAnswer ? (
+        <div className="mb-6 text-center">
+          <p className="text-xl">{word.vietnamese}</p>
+          {word.example && (
+            <p className="mt-2 text-gray-600 italic">"{word.example}"</p>
+          )}
+        </div>
+      ) : (
+        <button 
+          className="w-full py-3 mb-6 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          onClick={handleToggle}
+          onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
+          tabIndex={0}
+          aria-label="Show answer"
+        >
+          Show Answer
+        </button>
+      )}
+      
+      <div className="grid grid-cols-2 gap-4">
+        <Button 
+          variant="success"
+          className="w-full"
+          onClick={handleCorrect}
+          disabled={!showAnswer}
+          aria-label="Mark as known"
+        >
+          I knew it
+        </Button>
+        <Button 
+          variant="danger"
+          className="w-full"
+          onClick={handleIncorrect}
+          disabled={!showAnswer}
+          aria-label="Mark as unknown"
+        >
+          I didn't know
+        </Button>
+      </div>
+    </div>
+  );
+};
+```
+
+### Custom Hooks
+
+Create reusable hooks for shared logic:
+
+```tsx
+// src/hooks/useLocalStorage.ts
+import { useState, useEffect } from 'react';
+
+export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+  // State to store our value
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    
+    try {
+      // Get from local storage by key
+      const item = window.localStorage.getItem(key);
+      // Parse stored json or if none return initialValue
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      // If error also return initialValue
+      console.error(error);
+      return initialValue;
+    }
+  });
+  
+  // Return a wrapped version of useState's setter function that
+  // persists the new value to localStorage
+  const setValue = (value: T) => {
+    try {
+      // Save state
+      setStoredValue(value);
+      // Save to local storage
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  return [storedValue, setValue];
+}
+```
+
+## TailwindCSS Styling Guidelines
+
+### Using Tailwind Effectively
+
+- Use Tailwind utility classes for all styling
+- Create consistent UI by using standard spacing, colors, and typography
+- Use component composition for reusability
+
+```tsx
+// Example button component with Tailwind
+import React from 'react';
+
+type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'outline';
+
+type ButtonProps = {
+  variant?: ButtonVariant;
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  'aria-label'?: string;
+};
+
+export const Button: React.FC<ButtonProps> = ({
+  variant = 'primary',
+  size = 'md',
+  children,
+  className = '',
+  disabled = false,
+  onClick,
+  type = 'button',
+  'aria-label': ariaLabel,
+}) => {
+  // Base styles that apply to all buttons
+  const baseStyles = "inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors";
+  
+  // Variant styles
+  const variantStyles = {
+    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    secondary: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
+    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
+  };
+  
+  // Size styles
+  const sizeStyles = {
+    sm: "px-2 py-1 text-sm",
+    md: "px-4 py-2",
+    lg: "px-6 py-3 text-lg",
+  };
+  
+  // Disabled styles
+  const disabledStyles = disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer";
+  
+  return (
+    <button
+      type={type}
+      className={`
+        ${baseStyles}
+        ${variantStyles[variant]}
+        ${sizeStyles[size]}
+        ${disabledStyles}
+        ${className}
+      `}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </button>
+  );
+};
+```
+
+### Dynamic Styling with Class Conditionals
+
+Instead of ternary operators in className, use class conditionals where possible:
+
+```tsx
+// Before
+<div className={`
+  p-4 rounded
+  ${isActive ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}
+`}>
+  Content
+</div>
+
+// After - More readable approach
+<div 
+  className="p-4 rounded"
+  class:bg-blue-500={isActive}
+  class:text-white={isActive}
+  class:bg-gray-100={!isActive}
+  class:text-gray-800={!isActive}
+>
+  Content
+</div>
+```
+
+## Accessibility Best Practices
+
+Always implement proper accessibility features:
+
+1. Use semantic HTML elements (`<button>`, `<nav>`, `<header>`, etc.)
+2. Include ARIA attributes when necessary
+3. Ensure keyboard navigation works for all interactive elements
+4. Support proper focus management
+5. Use appropriate color contrast ratios
+
+```tsx
+// Accessible form input example
+<div>
+  <label 
+    htmlFor="email"
+    className="block text-sm font-medium text-gray-700"
+  >
+    Email address
+  </label>
+  <input
+    id="email"
+    name="email"
+    type="email"
+    autoComplete="email"
+    required
+    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    aria-describedby="email-error"
+  />
+  {errors.email && (
+    <p 
+      id="email-error"
+      className="mt-1 text-sm text-red-600"
+      role="alert"
+    >
+      {errors.email.message}
+    </p>
+  )}
+</div>
+```
+
+## Performance Tips
+
+1. Use early returns to avoid unnecessary renders and improve readability
+2. Memoize expensive calculations with `useMemo`
+3. Optimize event handlers with `useCallback`
+4. Use `React.memo` for components that render often but with the same props
+5. Implement code-splitting with React.lazy and Suspense
+
+```tsx
+// Early return example
+const WordDetails: React.FC<{ wordId?: string }> = ({ wordId }) => {
+  const { data: word, isLoading, error } = useWord(wordId);
+  
+  if (!wordId) {
+    return <p className="text-gray-500">Please select a word to view details</p>;
+  }
+  
+  if (isLoading) {
+    return <p className="text-gray-500">Loading word details...</p>;
+  }
+  
+  if (error) {
+    return <p className="text-red-500">Error loading word: {error.message}</p>;
+  }
+  
+  if (!word) {
+    return <p className="text-red-500">Word not found</p>;
+  }
+  
+  return (
+    <div className="p-4 bg-white rounded-lg shadow">
+      <h2 className="text-xl font-bold">{word.english}</h2>
+      <p className="mt-2">{word.vietnamese}</p>
+      {/* Rest of the component */}
+    </div>
+  );
+};
+```
+
+## Testing
+
+Run the test suite:
+```
+npm test
+```
+
+For coverage reports:
+```
+npm test -- --coverage
+```
+
+## Available Scripts
+
+- `npm start` - Starts the development server
+- `npm test` - Runs the test suite
+- `npm run build` - Builds for production
+- `npm run eject` - Ejects from Create React App (use with caution)
+
+## Troubleshooting
+
+- **"Module not found" errors**: Check import paths and ensure the module exists
+- **API connection issues**: Verify the backend is running and check CORS settings
+- **Build failures**: Check dependency versions and TypeScript errors

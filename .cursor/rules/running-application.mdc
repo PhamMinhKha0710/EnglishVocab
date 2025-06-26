@@ -1,0 +1,91 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Running the Application
+
+This document provides instructions on how to run both the backend and frontend components of the English Vocabulary App.
+
+## Backend (.NET Core)
+
+### First-time Setup
+
+1. Navigate to the Backend directory:
+   ```
+   cd src/Backend
+   ```
+
+2. Build the solution:
+   ```
+   dotnet build EnglishVocabApp.sln
+   ```
+
+3. Run database migrations (after adding EF Core migrations):
+   ```
+   dotnet ef database update --project EnglishVocab.Infrastructure --startup-project EnglishVocab.API
+   ```
+
+### Running the API
+
+Run the API project:
+```
+dotnet run --project EnglishVocab.API
+```
+
+The API will be available at:
+- https://localhost:5001
+- http://localhost:5000
+
+Swagger documentation will be available at:
+- https://localhost:5001/swagger
+- http://localhost:5000/swagger
+
+## Frontend (React)
+
+### First-time Setup
+
+1. Navigate to the Frontend directory:
+   ```
+   cd src/Frontend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+### Running the Development Server
+
+Start the development server:
+```
+npm start
+```
+
+The React app will be available at:
+- http://localhost:3000
+
+## Full-Stack Development
+
+1. Run the backend API in one terminal window
+2. Run the frontend development server in another terminal window
+3. Make changes to the code and see them reflected in real-time
+
+## Production Build
+
+### Backend
+
+Build the backend for production:
+```
+dotnet publish -c Release -o ./publish EnglishVocab.API
+```
+
+### Frontend
+
+Build the frontend for production:
+```
+cd src/Frontend
+npm run build
+```
+
+The production build will be in the `build` directory, ready to be served by a static file server.

@@ -1,0 +1,408 @@
+# Frontend TypeScript Models & API Integration
+
+This document outlines the TypeScript models and API integration patterns for the English Vocabulary App frontend.
+
+## Core TypeScript Models
+
+Models are defined in the `src/types` directory and represent the core entities of the application.
+
+### Entity Models
+
+```typescript
+// Base entity type with common properties
+export interface BaseEntity {
+  id: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+// User model
+export interface User extends BaseEntity {
+  email: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+}
+
+// Word model
+export interface Word extends BaseEntity {
+  english: string;
+  vietnamese: string;
+  pronunciation?: string;
+  example?: string;
+  notes?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  difficultyLevel: DifficultyLevel;
+  wordSetId?: string;
+}
+
+// WordSet model
+export interface WordSet extends BaseEntity {
+  name: string;
+  description?: string;
+  isPublic: boolean;
+  userId: string;
+  wordCount: number;
+}
+
+// UserProgress model
+export interface UserProgress extends BaseEntity {
+  userId: string;
+  wordId: string;
+  masteryLevel: MasteryLevel;
+  correctCount: number;
+  incorrectCount: number;
+  lastReviewed: string | null;
+  nextReviewDate: string | null;
+  
+  // Optional populated fields
+  word?: Word;
+}
+
+// StudySession model
+export interface StudySession extends BaseEntity {
+  userId: string;
+  startTime: string;
+  endTime: string | null;
+  wordsStudied: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  studyMode: StudyMode;
+}
+```
+
+### Enum Types
+
+```typescript
+// Difficulty levels for words
+export enum DifficultyLevel {
+  Easy = 'Easy',
+  Medium = 'Medium',
+  Hard = 'Hard',
+  VeryHard = 'VeryHard'
+}
+
+// User's mastery level for a word
+export enum MasteryLevel {
+  New = 'New',
+  Learning = 'Learning',
+  Familiar = 'Familiar',
+  Mastered = 'Mastered'
+}
+
+// Available study modes
+export enum StudyMode {
+  Flashcards = 'Flashcards',
+  Quiz = 'Quiz',
+  SpellingTest = 'SpellingTest',
+  MatchingGame = 'MatchingGame'
+}
+```
+
+## API Integration
+
+### API Client
+
+The API client uses axios to communicate with the backend:
+
+```typescript
+// src/services/api.ts
+import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+
+// Create API client with base configuration
+const apiClient: AxiosInstance = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for adding auth token
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // Handle 401 Unauthorized responses
+    if (error.response?.status === 401) {
+      // Clear local auth data
+      localStorage.removeItem('token');
+      // Redirect to login
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Type-safe wrapper for API requests
+export const api = {
+  get: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    return apiClient.get<T, AxiosResponse<T>>(url, config).then(res => res.data);
+  },
+  post: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+    return apiClient.post<T, AxiosResponse<T>>(url, data, config).then(res => res.data);
+  },
+  put: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+    return apiClient.put<T, AxiosResponse<T>>(url, data, config).then(res => res.data);
+  },
+  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    return apiClient.delete<T, AxiosResponse<T>>(url, config).then(res => res.data);
+  }
+};
+```
+
+### Service Layer
+
+The service layer provides an abstraction over the API client for each entity:
+
+```typescript
+// src/services/wordService.ts
+import { api } from './api';
+import { Word } from '@/types';
+
+// Type definitions for requests and responses
+export interface GetWordsParams {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+  wordSetId?: string;
+  difficultyLevel?: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Word service implementation
+export const wordService = {
+  // Get paginated list of words
+  getWords: (params: GetWordsParams = {}): Promise<PaginatedResponse<Word>> => {
+    return api.get<PaginatedResponse<Word>>('/words', { params });
+  },
+  
+  // Get word by ID
+  getWord: (id: string): Promise<Word> => {
+    return api.get<Word>(`/words/${id}`);
+  },
+  
+  // Create new word
+  createWord: (word: Omit<Word, 'id' | 'createdAt' | 'updatedAt'>): Promise<Word> => {
+    return api.post<Word>('/words', word);
+  },
+  
+  // Update existing word
+  updateWord: (id: string, word: Partial<Word>): Promise<Word> => {
+    return api.put<Word>(`/words/${id}`, word);
+  },
+  
+  // Delete word
+  deleteWord: (id: string): Promise<void> => {
+    return api.delete<void>(`/words/${id}`);
+  }
+};
+```
+
+## Data Fetching with React Query
+
+Use React Query for managing server state and caching:
+
+```typescript
+// src/hooks/useWords.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { wordService, GetWordsParams } from '@/services/wordService';
+import { Word } from '@/types';
+
+// Hook for fetching words
+export const useWords = (params: GetWordsParams = {}) => {
+  return useQuery(['words', params], () => wordService.getWords(params), {
+    keepPreviousData: true,
+  });
+};
+
+// Hook for fetching a single word
+export const useWord = (id: string) => {
+  return useQuery(['word', id], () => wordService.getWord(id), {
+    enabled: !!id,
+  });
+};
+
+// Hook for word mutations (create, update, delete)
+export const useWordMutations = () => {
+  const queryClient = useQueryClient();
+  
+  const createWord = useMutation(
+    (newWord: Omit<Word, 'id' | 'createdAt' | 'updatedAt'>) => 
+      wordService.createWord(newWord),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['words']);
+      }
+    }
+  );
+  
+  const updateWord = useMutation(
+    ({ id, word }: { id: string, word: Partial<Word> }) => 
+      wordService.updateWord(id, word),
+    {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['words']);
+        queryClient.invalidateQueries(['word', data.id]);
+      }
+    }
+  );
+  
+  const deleteWord = useMutation(
+    (id: string) => wordService.deleteWord(id),
+    {
+      onSuccess: (_, id) => {
+        queryClient.invalidateQueries(['words']);
+        queryClient.removeQueries(['word', id]);
+      }
+    }
+  );
+  
+  return {
+    createWord,
+    updateWord,
+    deleteWord,
+  };
+};
+```
+
+## TypeScript Best Practices
+
+### Type Utilities
+
+Leverage TypeScript utility types for enhanced type safety:
+
+```typescript
+// Pick only certain fields from a type
+type WordBasicInfo = Pick<Word, 'id' | 'english' | 'vietnamese'>;
+
+// Make certain fields optional
+type PartialWord = Partial<Word>;
+
+// Make certain fields required
+type RequiredWord = Required<Pick<Word, 'english' | 'vietnamese' | 'example'>>;
+
+// Omit certain fields from a type
+type WordCreationDTO = Omit<Word, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Extract union type members that satisfy a condition
+type PublicStudyModes = Extract<StudyMode, StudyMode.Flashcards | StudyMode.Quiz>;
+```
+
+### Type Guards
+
+Use type guards for runtime type checking:
+
+```typescript
+// Function to check if an object is a valid Word
+function isWord(obj: any): obj is Word {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    typeof obj.id === 'string' &&
+    typeof obj.english === 'string' &&
+    typeof obj.vietnamese === 'string'
+  );
+}
+
+// Usage example
+const handleData = (data: unknown) => {
+  if (isWord(data)) {
+    // TypeScript now knows data is a Word
+    console.log(data.english);
+  }
+};
+```
+
+## Form Handling Best Practices
+
+Use strongly-typed forms with proper validation and error handling:
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { DifficultyLevel } from '@/types';
+
+// Define the form schema with zod
+const wordFormSchema = z.object({
+  english: z.string().min(1, 'English word is required'),
+  vietnamese: z.string().min(1, 'Vietnamese translation is required'),
+  pronunciation: z.string().optional(),
+  example: z.string().optional(),
+  notes: z.string().optional(),
+  difficultyLevel: z.nativeEnum(DifficultyLevel)
+});
+
+// Derive TypeScript type from zod schema
+type WordFormValues = z.infer<typeof wordFormSchema>;
+
+// Form component
+export const WordForm: React.FC<{
+  initialValues?: Partial<WordFormValues>;
+  onSubmit: (values: WordFormValues) => void;
+}> = ({ initialValues, onSubmit }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<WordFormValues>({
+    resolver: zodResolver(wordFormSchema),
+    defaultValues: initialValues
+  });
+  
+  const handleFormSubmit = (values: WordFormValues) => {
+    onSubmit(values);
+  };
+  
+  return (
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+      <div>
+        <label htmlFor="english" className="block text-sm font-medium text-gray-700">
+          English
+        </label>
+        <input
+          id="english"
+          type="text"
+          {...register('english')}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          aria-invalid={errors.english ? "true" : "false"}
+        />
+        {errors.english && (
+          <p className="mt-1 text-sm text-red-600" role="alert">
+            {errors.english.message}
+          </p>
+        )}
+      </div>
+      
+      {/* Additional form fields... */}
+      
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        aria-label="Save word"
+      >
+        {isSubmitting ? 'Saving...' : 'Save'}
+      </button>
+    </form>
+  );
+};
+```
+
+By following these patterns, the frontend maintains strong type safety while providing a clean interface for interacting with the API.
