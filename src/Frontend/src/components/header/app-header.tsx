@@ -1,13 +1,11 @@
-"use client"
-
-import Link from "next/link"
-import { BookOpen, User, Bell } from "lucide-react"
+import { Link } from "react-router-dom"
+import { BookOpen, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
+import { UserProfileButton } from "@/components/auth/UserProfileButton"
 
 export function AppHeader() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 right-0 left-0 md:left-64 z-30">
@@ -31,23 +29,14 @@ export function AppHeader() {
               </Button>
               
               {/* User menu */}
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-purple-100 text-purple-800">
-                    {user?.firstName?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium hidden sm:inline">
-                  {user?.firstName || 'User'}
-                </span>
-              </div>
+              <UserProfileButton />
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/auth/login">
+              <Link to="/auth/login">
                 <Button variant="ghost" size="sm">Đăng nhập</Button>
               </Link>
-              <Link href="/auth/register">
+              <Link to="/auth/register">
                 <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Đăng ký</Button>
               </Link>
             </div>

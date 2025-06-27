@@ -10,8 +10,7 @@ export interface VocabularyWord {
   reviewCount: number
   lastReviewed?: Date
   nextReview?: Date
-  createdAt: Date
-  reviewData?: ReviewData // Add spaced repetition data
+  reviewData?: ReviewData
 }
 
 export interface ReviewData {
@@ -34,7 +33,6 @@ export interface UserProgress {
   level: number
   experience: number
   badges: Badge[]
-  lastStudyDate?: Date
 }
 
 export interface StudySession {
@@ -44,23 +42,22 @@ export interface StudySession {
   wordsStudied: number
   correctAnswers: number
   pointsEarned: number
-  wordsLearned: VocabularyWord[]
-  wordsReviewed: VocabularyWord[]
-  mode: "flashcard" | "quiz" | "typing" // Add study mode
+  wordsLearned: string[]
+  wordsReviewed: string[]
 }
 
 export interface Badge {
-  id: string
-  name: string
+  id: number
+  title: string
   description: string
+  earned: boolean
+  earnedDate?: Date
   icon: string
-  unlockedAt: Date
-  category: "streak" | "learning" | "achievement" | "special"
 }
 
 export interface AppSettings {
   theme: "light" | "dark" | "system"
-  language: "vi" | "en"
+  language: string
   soundEnabled: boolean
   notificationsEnabled: boolean
   dailyGoal: number
@@ -68,7 +65,6 @@ export interface AppSettings {
     enabled: boolean
     time: string
   }
-  spacedRepetitionEnabled: boolean // Add spaced repetition setting
 }
 
 export type DifficultyLevel = "beginner" | "intermediate" | "advanced"

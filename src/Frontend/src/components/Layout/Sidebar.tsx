@@ -5,10 +5,16 @@ import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAppStore } from "@/store/useAppStore"
-import { Home, BookOpen, BarChart3, Settings, Trophy, Menu, X, Flame, Target } from "lucide-react"
+import { Home, BookOpen, BarChart3, Settings, Trophy, Menu, X, Flame, Target, LogIn, UserPlus } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
-const navigationItems = [
+// Các liên kết sẽ luôn hiển thị (cả khi đăng nhập và không đăng nhập)
+const publicNavigationItems = [
   { href: "/", label: "Trang chủ", icon: Home },
+]
+
+// Các liên kết chỉ hiển thị khi đã đăng nhập
+const privateNavigationItems = [
   { href: "/study", label: "Học từ vựng", icon: BookOpen },
   { href: "/progress", label: "Tiến độ", icon: BarChart3 },
   { href: "/achievements", label: "Thành tích", icon: Trophy },
@@ -19,6 +25,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
   const { userProgress } = useAppStore()
+  const { isAuthenticated } = useAuth()
 
   return (
     <>
@@ -46,7 +53,8 @@ export function Sidebar() {
           </div>
 
           <div className="space-y-2">
-            {navigationItems.map((item) => {
+            {/* Các liên kết công khai */}
+            {publicNavigationItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
 
@@ -65,32 +73,73 @@ export function Sidebar() {
                 </Link>
               )
             })}
+
+            {/* Các liên kết riêng tư (chỉ hiển thị khi đã đăng nhập) */}
+            {isAuthenticated && privateNavigationItems.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.href
+
+              return (
+                <Link key={item.href} to={item.href}>
+                  <Button
+                    variant={isActive ? "default" : "ghost"}
+                    className={`w-full justify-start ${
+                      isActive ? "bg-purple-600 hover:bg-purple-700 text-white" : "text-gray-600 hover:text-gray-800"
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Icon className="w-4 h-4 mr-3" />
+                    {item.label}
+                  </Button>
+                </Link>
+              )
+            })}
+
+            {/* Hiển thị nút đăng nhập/đăng ký nếu chưa đăng nhập */}
+            {!isAuthenticated && (
+              <div className="mt-4 space-y-2">
+                <Link to="/auth/login">
+                  <Button variant="outline" className="w-full justify-start">
+                    <LogIn className="w-4 h-4 mr-3" />
+                    Đăng nhập
+                  </Button>
+                </Link>
+                <Link to="/auth/register">
+                  <Button className="w-full justify-start bg-purple-600 hover:bg-purple-700">
+                    <UserPlus className="w-4 h-4 mr-3" />
+                    Đăng ký
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Quick Stats */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Hôm nay</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600 flex items-center gap-1">
-                  <Target className="w-3 h-3" />
-                  Mục tiêu
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  {userProgress.wordsToday}/{userProgress.dailyGoal}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600 flex items-center gap-1">
-                  <Flame className="w-3 h-3" />
-                  Chuỗi ngày
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  {userProgress.currentStreak} ngày
-                </Badge>
+          {/* Quick Stats - chỉ hiển thị khi đã đăng nhập */}
+          {isAuthenticated && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Hôm nay</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600 flex items-center gap-1">
+                    <Target className="w-3 h-3" />
+                    Mục tiêu
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {userProgress.wordsToday}/{userProgress.dailyGoal}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600 flex items-center gap-1">
+                    <Flame className="w-3 h-3" />
+                    Chuỗi ngày
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {userProgress.currentStreak} ngày
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </nav>
 
