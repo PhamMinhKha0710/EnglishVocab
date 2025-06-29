@@ -1,0 +1,84 @@
+/* 3D Flashcard Style Overrides */
+
+/* Card click animation */
+@keyframes card-click {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.card-click {
+  animation: card-click 0.3s ease;
+}
+
+/* Ensure proper 3D space for card flipping */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Apply 3D transform style to parent elements to propagate 3D effects to children */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Hide back face of elements when rotated */
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Rotate transformations for card flipping */
+.rotate-y-0 {
+  transform: rotateY(0deg);
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Flip transition animation */
+.flip-transition {
+  transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure compatibility across multiple browsers */
+.flashcard-3d-container {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+  -moz-perspective: 1000px;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  will-change: transform;
+}
+
+.flashcard-3d-inner {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transition: transform 0.7s;
+  -webkit-transition: transform 0.7s;
+  -moz-transition: transform 0.7s;
+  will-change: transform;
+}
+
+.flashcard-3d-front,
+.flashcard-3d-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.flashcard-3d-front {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+.flashcard-3d-back {
+  transform: rotateY(180deg);
+} 

@@ -19,8 +19,8 @@ export function AppHeader() {
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-30">
       <div className="px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
+        {/* Logo và Navigation */}
+        <div className="flex items-center">
           {/* Mobile menu button */}
           <Button 
             variant="ghost" 
@@ -32,34 +32,34 @@ export function AppHeader() {
           </Button>
           
           <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">FlashLearn</h1>
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-800">FlashLearn</h1>
           </Link>
+
+          {/* Desktop Navigation - Di chuyển từ giữa sang trái */}
+          <nav className="hidden md:flex items-center ml-12 space-x-8">
+            {visibleNavigationItems.map((item, index) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+
+              return (
+                <Link
+                  key={index}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center text-sm font-medium transition-colors hover:text-gray-900",
+                    isActive ? "text-gray-900 font-semibold" : "text-gray-600"
+                  )}
+                >
+                  <Icon className="mr-1.5 h-4 w-4" />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {visibleNavigationItems.map((item, index) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-
-            return (
-              <Link
-                key={index}
-                to={item.href}
-                className={cn(
-                  "flex items-center text-sm font-medium transition-colors hover:text-gray-900",
-                  isActive ? "text-gray-900" : "text-gray-600"
-                )}
-              >
-                <Icon className="mr-1 h-4 w-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
 
         {/* Right side - User menu */}
         <div className="flex items-center gap-4">
