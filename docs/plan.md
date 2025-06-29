@@ -479,7 +479,7 @@ xml<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Ver
 ### Development Tools
 - Visual Studio 2022 / VS Code
 - SQL Server Management Studio
-- Postman cho API testing
+- Swagger cho API testing
 - Git với GitHub
 
 ### Learning Resources

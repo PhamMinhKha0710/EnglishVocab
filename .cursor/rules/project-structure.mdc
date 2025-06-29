@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Project Structure
@@ -11,23 +11,37 @@ The English Vocabulary App follows a clean architecture approach with separate f
 
 The backend follows Clean Architecture principles with the following layers:
 
+- **Constants Layer** - Contains shared constants and enums
+  - Constants: [DifficultyLevel.cs](mdc:src/Backend/EnglishVocab.Constants/Constant/DifficultyLevel.cs), [MasteryLevel.cs](mdc:src/Backend/EnglishVocab.Constants/Constant/MasteryLevel.cs), [StudyMode.cs](mdc:src/Backend/EnglishVocab.Constants/Constant/StudyMode.cs), [UserRole.cs](mdc:src/Backend/EnglishVocab.Constants/Constant/UserRole.cs)
+
 - **Domain Layer** - Contains business entities and logic
-  - Core entities: [User.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/User.cs), [Word.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/Word.cs), [WordSet.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/WordSet.cs)
-  - Base types: [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/BaseEntity.cs)
-  - Enums: [DifficultyLevel.cs](mdc:src/Backend/EnglishVocab.Domain/Enums/DifficultyLevel.cs), [MasteryLevel.cs](mdc:src/Backend/EnglishVocab.Domain/Enums/MasteryLevel.cs)
+  - Base types: [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Common/BaseEntity.cs)
+  - Core entities: [User.cs](mdc:src/Backend/EnglishVocab.Domain/User.cs), [Word.cs](mdc:src/Backend/EnglishVocab.Domain/Word.cs), [WordSet.cs](mdc:src/Backend/EnglishVocab.Domain/WordSet.cs), [UserProgress.cs](mdc:src/Backend/EnglishVocab.Domain/UserProgress.cs), [StudySession.cs](mdc:src/Backend/EnglishVocab.Domain/StudySession.cs), [UserAction.cs](mdc:src/Backend/EnglishVocab.Domain/UserAction.cs)
 
 - **Application Layer** - Contains application use cases and business rules
-  - Features organized by domain functions (Auth, Words, WordSets, etc.)
-  - Each feature has Commands, Queries, and Handlers following CQRS pattern
+  - Common interfaces: [IAuthService.cs](mdc:src/Backend/EnglishVocab.Application/Common/Interfaces/IAuthService.cs), [ITokenService.cs](mdc:src/Backend/EnglishVocab.Application/Common/Interfaces/ITokenService.cs), [IUserService.cs](mdc:src/Backend/EnglishVocab.Application/Common/Interfaces/IUserService.cs)
+  - Common models: [TokenDto.cs](mdc:src/Backend/EnglishVocab.Application/Common/Models/TokenDto.cs), [UserDto.cs](mdc:src/Backend/EnglishVocab.Application/Common/Models/UserDto.cs)
+  - Features organized by domain functions:
+    - Auth: Commands (Login, Register, RefreshToken) and Handlers
+    - Words: Management of vocabulary
+    - WordSets: Management of word collections
+    - StudySessions: Tracking study activities
+    - UserProgress: Tracking learning progress
+
+- **Identity Layer** - Handles authentication and authorization
+  - Identity models: [ApplicationUser.cs](mdc:src/Backend/EnglishVocab.Identity/Models/ApplicationUser.cs), [ApplicationRole.cs](mdc:src/Backend/EnglishVocab.Identity/Models/ApplicationRole.cs)
+  - Identity database context: [IdentityDbContext.cs](mdc:src/Backend/EnglishVocab.Identity/Data/Dbcontext/IdentityDbContext.cs)
+  - Services: [AuthService.cs](mdc:src/Backend/EnglishVocab.Identity/Services/AuthService.cs), [TokenService.cs](mdc:src/Backend/EnglishVocab.Identity/Services/TokenService.cs), [UserService.cs](mdc:src/Backend/EnglishVocab.Identity/Services/UserService.cs)
 
 - **Infrastructure Layer** - Implements interfaces defined in the Application layer
-  - Database context and repositories
-  - External services (Email, File handling, etc.)
+  - Database context: [EnglishVocabDatabaseContext.cs](mdc:src/Backend/EnglishVocab.Infrastructure/DatabaseContext/EnglishVocabDatabaseContext.cs)
+  - Entity configurations: Located in [Configurations/](mdc:src/Backend/EnglishVocab.Infrastructure/Configurations)
+  - Extension services: [InfrastructureServiceExtensions.cs](mdc:src/Backend/EnglishVocab.Infrastructure/InfrastructureServiceExtensions.cs)
 
 - **API Layer** - Web API controllers and endpoints
-  - REST API controllers for each domain entity
-  - Authentication middleware
-  - Swagger documentation
+  - Controllers: [AuthController.cs](mdc:src/Backend/EnglishVocab.API/Controllers/AuthController.cs)
+  - Startup configuration: [Program.cs](mdc:src/Backend/EnglishVocab.API/Program.cs)
+  - Extension services: [ApiServiceExtensions.cs](mdc:src/Backend/EnglishVocab.API/Extensions/ApiServiceExtensions.cs)
 
 ## Frontend (React with TypeScript)
 
@@ -42,6 +56,8 @@ The frontend is organized as follows:
 
 - **pages/** - Page components that compose multiple components
 
+- **contexts/** - React contexts including [auth-context.tsx](mdc:src/Frontend/src/contexts/auth-context.tsx)
+
 - **hooks/** - Custom React hooks
 
 - **services/** - API clients and services
@@ -53,5 +69,7 @@ The frontend is organized as follows:
 ## Development Guidelines
 
 - Backend changes should follow Clean Architecture principles
+- Entity IDs use long type for better performance and simplicity
+- Changes tracking with UserAction entity for audit trails
 - Frontend components should be functional with hooks
 - Follow the existing folder structure when adding new features

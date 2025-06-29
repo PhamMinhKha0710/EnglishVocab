@@ -11,7 +11,7 @@ This document describes the core domain entities and their relationships in the 
 
 ### User
 - Represents an application user
-- Properties: Email, PasswordHash, FirstName, LastName, IsActive
+- Properties: Username, Email, FirstName, LastName, PasswordHash, IsActive
 - Relationships:
   - One-to-Many with WordSets (a user can have multiple word sets)
   - One-to-Many with UserProgress (tracks user's progress for words)
@@ -26,10 +26,11 @@ This document describes the core domain entities and their relationships in the 
 
 ### WordSet
 - Represents a collection of related words
-- Properties: Name, Description, IsPublic
+- Properties: Name, Description, Category, ImageUrl, IsPublic
 - Relationships:
   - Many-to-One with User (created by a user)
   - One-to-Many with Words (contains multiple words)
+  - One-to-Many with StudySessions (sessions using this set)
 
 ### UserProgress
 - Tracks a user's progress for a specific word
@@ -43,17 +44,36 @@ This document describes the core domain entities and their relationships in the 
 - Properties: StartTime, EndTime, WordsStudied, CorrectAnswers, IncorrectAnswers, StudyMode
 - Relationships:
   - Many-to-One with User
+  - Many-to-One with WordSet
 
-## Enums
+### UserAction
+- Tracks changes to entities for audit trail
+- Properties: ActionType, Source, SourceId, UserId, Description
+- Used by the system to keep history of data changes
+
+## Constants (EnglishVocab.Constants)
 
 ### DifficultyLevel
 - Easy, Medium, Hard, VeryHard
 
 ### MasteryLevel
-- New, Learning, Familiar, Mastered
+- NotStudied, Learning, Familiar, Mastered
 
 ### StudyMode
-- Flashcards, Quiz, SpellingTest, MatchingGame
+- Flashcards, Quiz, TypingTest, MatchingGame
+
+### UserRole
+- Admin, User
+
+## Identity Models (EnglishVocab.Identity)
+
+### ApplicationUser
+- Extends IdentityUser
+- Properties: FirstName, LastName, RefreshToken, RefreshTokenExpiryTime, IsActive, CreatedAt, UpdatedAt
+
+### ApplicationRole
+- Extends IdentityRole
+- Properties: Description
 
 ## Entity Diagram
 
@@ -63,8 +83,18 @@ User 1 --- * UserProgress
 User 1 --- * StudySession
 WordSet 1 --- * Word
 Word 1 --- * UserProgress
+WordSet 1 --- * StudySession
 ```
 
 ## Implementation Details
 
-All entities inherit from [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Entities/BaseEntity.cs) which provides common properties like Id, CreatedAt, and UpdatedAt.
+All domain entities inherit from [BaseEntity.cs](mdc:src/Backend/EnglishVocab.Domain/Common/BaseEntity.cs) which provides:
+- ID (long type for better performance)
+- CreatedBy (string)
+- ModifiedBy (string)
+- DateCreated (DateTime)
+- DateModified (DateTime?)
+
+Identity models are separate from domain entities and are used for authentication and authorization.
+
+Changes tracking is handled by the Infrastructure layer via UserAction entities and overridden SaveChangesAsync method.
