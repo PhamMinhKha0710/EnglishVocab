@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace EnglishVocab.API.Controllers
 {
@@ -49,7 +53,7 @@ namespace EnglishVocab.API.Controllers
                 _logger.LogWarning("Đăng ký thất bại: {Message}", result.Message);
                 return BadRequest(result);
             }
-            }
+        }
             
         /// <summary>
         /// Đăng nhập vào hệ thống
@@ -75,7 +79,7 @@ namespace EnglishVocab.API.Controllers
                 _logger.LogWarning("Đăng nhập thất bại cho email {Email}: {Message}", request.Email, result.Message);
                 return Unauthorized(result);
             }
-            }
+        }
             
         /// <summary>
         /// Làm mới token
@@ -122,10 +126,45 @@ namespace EnglishVocab.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Đăng xuất khỏi hệ thống
+        /// </summary>
+        /// <returns>Kết quả đăng xuất</returns>
+        /// <response code="200">Đăng xuất thành công</response>
+        /// <response code="400">Đăng xuất thất bại</response>
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            // Lấy userId từ claim của token
+            var userIdClaim = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                _logger.LogWarning("Không thể lấy userId từ token");
+                return BadRequest(new { message = "Invalid user ID" });
+            }
+
+            _logger.LogInformation("Yêu cầu đăng xuất từ userId: {UserId}", userId);
+            
+            var command = new RevokeTokenCommand { UserId = userId };
+            var result = await _mediator.Send(command);
+            
+            if (result)
+            {
+                _logger.LogInformation("Đăng xuất thành công cho userId: {UserId}", userId);
+                return Ok(new { message = "Logout successful" });
+            }
+            else
+            {
+                _logger.LogWarning("Đăng xuất thất bại cho userId: {UserId}", userId);
+                return BadRequest(new { message = "Logout failed" });
+            }
+        }
+
         [HttpGet("user/{userId}")]
         [Authorize]
         public async Task<ActionResult<UserDto>> GetUserDetail(int userId)
-            {
+        {
             _logger.LogInformation("Lấy thông tin user có id: {UserId}", userId);
             var query = new GetUserDetailQuery(userId);
             var result = await _mediator.Send(query);

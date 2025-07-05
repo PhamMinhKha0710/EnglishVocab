@@ -25,7 +25,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Gọi hàm login từ AuthContext
+      // Gọi hàm login từ AuthContext và truyền rememberMe
       const success = await login(email, password, rememberMe)
       
       if (success) {

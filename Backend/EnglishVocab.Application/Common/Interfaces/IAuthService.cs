@@ -9,6 +9,7 @@ namespace EnglishVocab.Application.Common.Interfaces
         Task<AuthResponse> Register(RegisterCommand request);
         Task<AuthResponse> RefreshToken(RefreshTokenCommand request);
         Task<bool> RevokeToken(int userId);
+        Task<bool> Logout(int userId);
     }
 
     public class AuthResponse

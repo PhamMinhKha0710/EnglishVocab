@@ -269,9 +269,27 @@ namespace EnglishVocab.Identity.Services
             {
                 return false;
             }
-
+            
+            // Xóa refresh token hiện tại
             user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow;
+            
+            var result = await _userManager.UpdateAsync(user);
+            return result.Succeeded;
+        }
+
+        // Phương thức đăng xuất
+        public async Task<bool> Logout(int userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return false;
+            }
+            
+            // Xóa refresh token và đặt thời hạn hết hạn
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow;
             
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;

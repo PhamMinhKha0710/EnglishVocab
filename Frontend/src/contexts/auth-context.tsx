@@ -21,7 +21,7 @@ interface AuthContextType {
   isLoading: boolean
   error: string | null
   register: (username: string, email: string, password: string, firstName: string, lastName: string) => Promise<boolean>
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>
   logout: () => void
   updateProfile: (profileData: UpdateProfileParams, onSuccess?: () => void) => Promise<boolean>
   refreshUserData: () => void
@@ -62,14 +62,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Kiểm tra xem người dùng đã đăng nhập chưa khi component mount
   useEffect(() => {
     const checkLoggedIn = () => {
-      const storedUser = localStorage.getItem("user")
+      // Kiểm tra cả localStorage và sessionStorage
+      const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user")
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser)
           setUser(parsedUser)
         } catch (err) {
-          console.error("Error parsing user from localStorage")
+          console.error("Error parsing user from storage")
           localStorage.removeItem("user")
+          sessionStorage.removeItem("user")
         }
       }
       setIsLoading(false)
@@ -122,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // Hàm đăng nhập
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, rememberMe: boolean = false): Promise<boolean> => {
     setIsLoading(true)
     setError(null)
     console.log("Bắt đầu đăng nhập")
@@ -151,7 +153,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Lưu trữ và cập nhật trạng thái
         setUser(loggedInUser)
-        localStorage.setItem("user", JSON.stringify(loggedInUser))
+        
+        // Sử dụng storage phù hợp dựa trên rememberMe
+        const storage = rememberMe ? localStorage : sessionStorage
+        storage.setItem("user", JSON.stringify(loggedInUser))
+        
         setIsLoading(false)
         return true
       } else {
@@ -225,13 +231,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // Hàm đăng xuất
-  const logout = () => {
+  const logout = async () => {
     console.log("Đang đăng xuất...")
     setIsLoading(true)
     
     try {
-      // Xóa thông tin người dùng khỏi localStorage
+      // Gọi API đăng xuất nếu có token
+      if (user?.accessToken) {
+        await apiService.logout(user.accessToken)
+      }
+      
+      // Xóa thông tin người dùng khỏi localStorage và sessionStorage
       localStorage.removeItem("user")
+      sessionStorage.removeItem("user")
       
       // Cập nhật state
       setUser(null)
@@ -242,7 +254,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Đăng xuất thành công")
     } catch (err) {
       console.error("Lỗi khi đăng xuất:", err)
+      // Xóa thông tin người dùng khỏi localStorage và sessionStorage ngay cả khi có lỗi
+      localStorage.removeItem("user")
+      sessionStorage.removeItem("user")
+      setUser(null)
       setIsLoading(false)
+      navigate("/auth/login")
     }
   }
 

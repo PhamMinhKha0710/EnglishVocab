@@ -1,6 +1,23 @@
 // Đường dẫn cơ sở của API
 const API_URL = "http://localhost:7010/api";
 
+// Token đang được làm mới
+let isRefreshing = false;
+let failedQueue: {resolve: (token: string) => void; reject: (error: any) => void}[] = [];
+
+// Xử lý hàng đợi sau khi làm mới token
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Interface cho tham số đăng ký
 interface RegisterParams {
   username: string;
@@ -187,6 +204,30 @@ export const apiService = {
     }
   },
 
+  // Đăng xuất (gọi API server)
+  async logout(token: string): Promise<boolean> {
+    try {
+      console.log("Logging out on server");
+      
+      const response = await fetch(`${API_URL}/Auth/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Logout response status:", response.status);
+      
+      // Ngay cả khi server lỗi, chúng ta vẫn cần đăng xuất client
+      return response.ok;
+    } catch (error: any) {
+      console.error("Logout error:", error.message);
+      // Ngay cả khi có lỗi, chúng ta vẫn trả về true để frontend xóa token local
+      return true;
+    }
+  },
+
   // Cập nhật hồ sơ người dùng
   async updateProfile(params: UpdateProfileParams, token: string): Promise<UpdateProfileResponse> {
     try {
@@ -250,15 +291,83 @@ export const apiService = {
         },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Yêu cầu thất bại");
+      // Kiểm tra nếu token hết hạn (401 Unauthorized)
+      if (response.status === 401) {
+        return this.handleTokenExpiration(url, options, token);
       }
 
-      return data;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "API call failed");
+      }
+
+      return await response.json();
     } catch (error: any) {
-      throw new Error(error.message || "Đã xảy ra lỗi khi gọi API");
+      console.error("API call error:", error.message);
+      throw error;
     }
   },
+  
+  // Xử lý token hết hạn
+  async handleTokenExpiration(url: string, options: RequestInit, token: string): Promise<any> {
+    // Lấy refresh token từ localStorage hoặc sessionStorage
+    const user = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "null");
+    
+    if (!user || !user.refreshToken) {
+      // Không có refresh token, chuyển hướng người dùng đến trang đăng nhập
+      window.location.href = "/auth/login";
+      throw new Error("Refresh token not found");
+    }
+    
+    // Nếu đang có yêu cầu làm mới token, thêm yêu cầu hiện tại vào hàng đợi
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+        .then(newToken => {
+          return this.fetchWithAuth(url, options, newToken as string);
+        })
+        .catch(err => {
+          throw err;
+        });
+    }
+    
+    isRefreshing = true;
+    
+    try {
+      // Làm mới token
+      const refreshResult = await this.refreshToken({
+        accessToken: token,
+        refreshToken: user.refreshToken
+      });
+      
+      // Lưu token mới
+      const newToken = refreshResult.accessToken;
+      
+      // Cập nhật thông tin người dùng trong localStorage hoặc sessionStorage
+      const updatedUser = { ...user, accessToken: newToken, refreshToken: refreshResult.refreshToken };
+      if (localStorage.getItem("user")) {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+      
+      // Thực hiện lại các yêu cầu trong hàng đợi với token mới
+      processQueue(null, newToken);
+      isRefreshing = false;
+      
+      // Thực hiện lại yêu cầu hiện tại với token mới
+      return this.fetchWithAuth(url, options, newToken);
+    } catch (error) {
+      // Nếu làm mới token thất bại, hủy tất cả các yêu cầu trong hàng đợi
+      processQueue(error, null);
+      isRefreshing = false;
+      
+      // Xóa thông tin người dùng và chuyển hướng đến trang đăng nhập
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
+      window.location.href = "/auth/login";
+      throw error;
+    }
+  }
 }; 
