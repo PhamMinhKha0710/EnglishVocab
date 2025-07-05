@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Running the Application
@@ -21,9 +21,14 @@ This document provides instructions on how to run both the backend and frontend 
    dotnet build EnglishVocabApp.sln
    ```
 
-3. Run database migrations (after adding EF Core migrations):
+3. Run database migrations for the main database:
    ```
    dotnet ef database update --project EnglishVocab.Infrastructure --startup-project EnglishVocab.API
+   ```
+
+4. Run database migrations for the identity database:
+   ```
+   dotnet ef database update --project EnglishVocab.Identity --startup-project EnglishVocab.API
    ```
 
 ### Running the API

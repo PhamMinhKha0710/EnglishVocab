@@ -17,15 +17,20 @@ FlashLearn là ứng dụng học từ vựng tiếng Anh hiện đại, giúp n
 - **Theo dõi tiến độ**: Biểu đồ và thống kê chi tiết về quá trình học
 - **Thành tích và động lực**: Hệ thống huy hiệu và thành tích thúc đẩy việc học
 - **Đa dạng bài tập**: Trắc nghiệm, điền từ, phát âm và nhiều hình thức khác
+- **Hỗ trợ offline**: Sử dụng được khi không có kết nối internet
+- **Đăng nhập/Đăng ký**: Hệ thống xác thực để lưu trữ tiến độ học tập
 
 ## 🚀 Công nghệ sử dụng
 
 ### Frontend
-- **Next.js 14**: Framework React hiện đại với SSR và routing
+- **React**: Thư viện JavaScript để xây dựng giao diện người dùng
+- **Vite**: Công cụ build nhanh và hiệu quả
+- **React Router**: Quản lý định tuyến trong ứng dụng React
 - **TypeScript**: Hệ thống kiểu dữ liệu tĩnh
 - **Tailwind CSS**: Framework CSS tiện lợi
 - **Shadcn UI**: Thư viện components đẹp và dễ tùy biến
 - **Lucide Icons**: Bộ icon vector chất lượng cao
+- **LocalStorage**: Lưu trữ dữ liệu người dùng và xác thực cục bộ
 
 ### Backend
 - **.NET 9**: Framework mạnh mẽ cho API và dịch vụ
@@ -40,21 +45,26 @@ Dự án được tổ chức theo mô hình Domain-Driven Design (DDD) với c�
 ```
 EnglishVocabApp/
 ├── src/
-│   ├── Frontend/             # Next.js frontend
-│   │   ├── app/              # App router và pages
-│   │   ├── components/       # React components
-│   │   │   ├── audio/        # Components xử lý âm thanh
-│   │   │   ├── flashcards/   # Components thẻ học từ vựng
-│   │   │   ├── footer/       # Components footer
-│   │   │   ├── header/       # Components header
-│   │   │   ├── layout/       # Components layout
-│   │   │   ├── menu/         # Components menu và navigation
-│   │   │   ├── quiz/         # Components bài tập và quiz
-│   │   │   ├── search/       # Components tìm kiếm
-│   │   │   └── ui/           # UI components cơ bản
-│   │   ├── contexts/         # React contexts
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── lib/              # Utility functions
+│   ├── Frontend/             # React + Vite frontend
+│   │   ├── src/
+│   │   │   ├── app/          # App pages (không sử dụng App Router)
+│   │   │   ├── components/   # React components
+│   │   │   │   ├── audio/    # Components xử lý âm thanh
+│   │   │   │   ├── auth/     # Components xác thực
+│   │   │   │   ├── flashcards/ # Components thẻ học từ vựng
+│   │   │   │   ├── footer/   # Components footer
+│   │   │   │   ├── header/   # Components header
+│   │   │   │   ├── layout/   # Components layout
+│   │   │   │   ├── menu/     # Components menu và navigation
+│   │   │   │   ├── quiz/     # Components bài tập và quiz
+│   │   │   │   ├── search/   # Components tìm kiếm
+│   │   │   │   └── ui/       # UI components cơ bản
+│   │   │   ├── contexts/     # React contexts (bao gồm auth-context)
+│   │   │   ├── hooks/        # Custom React hooks
+│   │   │   ├── lib/          # Utility functions
+│   │   │   ├── pages/        # Các trang của ứng dụng
+│   │   │   ├── store/        # State management
+│   │   │   └── types/        # TypeScript type definitions
 │   │   └── public/           # Static assets
 │   │
 │   └── Backend/              # .NET backend
@@ -86,7 +96,7 @@ npm install
 npm run dev
 ```
 
-Truy cập frontend tại http://localhost:3000
+Truy cập frontend tại http://localhost:5173
 
 ### Backend
 
@@ -108,11 +118,19 @@ API sẽ chạy tại https://localhost:7001
 
 ## 📱 Các màn hình chính
 
-- **Trang chủ**: Tổng quan và bắt đầu học
-- **Học từ vựng**: Flashcards và các bài tập
-- **Tiến độ**: Biểu đồ và thống kê học tập
-- **Thành tích**: Huy hiệu và thành tựu
-- **Cài đặt**: Tùy chỉnh cá nhân
+- **Trang chủ**: Tổng quan và giới thiệu ứng dụng (có thể truy cập khi chưa đăng nhập)
+- **Đăng nhập/Đăng ký**: Màn hình xác thực người dùng
+- **Học từ vựng**: Flashcards và các bài tập (yêu cầu đăng nhập)
+- **Tiến độ**: Biểu đồ và thống kê học tập (yêu cầu đăng nhập)
+- **Thành tích**: Huy hiệu và thành tựu (yêu cầu đăng nhập)
+- **Cài đặt**: Tùy chỉnh cá nhân (yêu cầu đăng nhập)
+
+## 🔒 Xác thực và bảo mật
+
+- **Đăng ký người dùng**: Tạo tài khoản mới với email và mật khẩu
+- **Đăng nhập**: Xác thực người dùng để truy cập các tính năng học tập
+- **Route Protection**: Các trang yêu cầu đăng nhập được bảo vệ tự động
+- **LocalStorage**: Dữ liệu xác thực được lưu trữ cục bộ để duy trì phiên đăng nhập
 
 ## 👥 Đóng góp
 

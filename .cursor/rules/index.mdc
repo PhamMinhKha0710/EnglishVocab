@@ -3,6 +3,11 @@
 This document serves as an index to all development guidelines and rules for the English Vocabulary App.
 
 ## Backend Rules (.NET Core)
+# English Vocabulary App Development Guidelines
+
+This document serves as an index to all development guidelines and rules for the English Vocabulary App.
+
+## Backend Rules (.NET Core)
 
 - [Domain Model & C# Implementation Standards](mdc:.cursor/rules/backend/domain-model.mdc) - Core entities, relationships, and C# implementation guidelines
 - [Clean Architecture & .NET Development Standards](mdc:.cursor/rules/backend/clean-architecture.mdc) - Architecture layers, dependency flow, and C# best practices
@@ -55,7 +60,9 @@ EnglishVocabApp/
 │   ├── Backend/             # .NET Core backend
 │   │   ├── EnglishVocab.API/             # API layer
 │   │   ├── EnglishVocab.Application/     # Application layer
+│   │   ├── EnglishVocab.Constants/       # Constants and enums
 │   │   ├── EnglishVocab.Domain/          # Domain layer
+│   │   ├── EnglishVocab.Identity/        # Identity layer
 │   │   ├── EnglishVocab.Infrastructure/  # Infrastructure layer
 │   │   └── EnglishVocab.Tests/           # Test projects
 │   └── Frontend/            # React frontend

@@ -1,6 +1,0 @@
-@EnglishVocab.API_HostAddress = http://localhost:5005
-
-GET {{EnglishVocab.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

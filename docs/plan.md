@@ -232,6 +232,102 @@ xml<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Ver
 ```
 ---
 
+## Tiến độ hiện tại (cập nhật: tháng 6/2025)
+
+### Đã hoàn thành:
+
+#### Backend
+- [x] Thiết lập dự án .NET Clean Architecture
+- [x] Thiết kế và cài đặt database schema
+- [x] Migration cho Identity và main database
+- [x] JWT Authentication (login, register, refresh token)
+- [x] Logout API endpoint với token invalidation
+- [x] User profile management API
+- [x] Token expiration (15 phút) và automatic refresh
+- [x] Error handling middleware
+
+#### Frontend
+- [x] Thiết lập dự án React với TypeScript
+- [x] Authentication UI (login, register screens)
+- [x] Protected routes và guest routes
+- [x] User profile management UI
+- [x] Context API cho quản lý trạng thái đăng nhập
+- [x] Token interceptor cho xử lý token hết hạn
+- [x] Remember me functionality
+
+### To-do list cho phase tiếp theo (Word Management):
+
+#### Backend Tasks
+1. [ ] **Word Entity & DB Setup**
+   - [ ] Cập nhật Word entity với các trường cần thiết
+   - [ ] Tạo WordRepository interface và implementation
+   - [ ] Thiết lập entity configuration cho Word
+
+2. [ ] **WordSet Entity & DB Setup**
+   - [ ] Cập nhật WordSet entity với các trường cần thiết
+   - [ ] Tạo WordSetRepository interface và implementation
+   - [ ] Thiết lập entity configuration cho WordSet
+   - [ ] Xác định relationship giữa User-WordSet-Word
+
+3. [ ] **Word API Endpoints**
+   - [ ] CreateWord command và handler
+   - [ ] UpdateWord command và handler
+   - [ ] DeleteWord command và handler
+   - [ ] GetWordById query và handler
+   - [ ] GetWordsPaginated query và handler
+   - [ ] SearchWords query và handler
+
+4. [ ] **WordSet API Endpoints**
+   - [ ] CreateWordSet command và handler
+   - [ ] UpdateWordSet command và handler
+   - [ ] DeleteWordSet command và handler
+   - [ ] GetWordSetById query và handler
+   - [ ] GetWordSetsPaginated query và handler
+   - [ ] AddWordsToWordSet command và handler
+   - [ ] RemoveWordsFromWordSet command và handler
+
+5. [ ] **Import/Export Functionality**
+   - [ ] ImportWordsFromCSV command và handler
+   - [ ] ExportWordsToCSV query và handler
+   - [ ] Validate và sanitize import data
+
+#### Frontend Tasks
+1. [ ] **Word Management Components**
+   - [ ] WordList component
+   - [ ] WordForm component (create/edit)
+   - [ ] WordDetail component
+   - [ ] WordFilter và SearchBar components
+
+2. [ ] **WordSet Management Components**
+   - [ ] WordSetList component
+   - [ ] WordSetForm component (create/edit)
+   - [ ] WordSetDetail component
+   - [ ] WordSelector cho WordSet
+
+3. [ ] **Import/Export UI**
+   - [ ] CSV upload component
+   - [ ] Import preview và validation
+   - [ ] Export options UI
+
+4. [ ] **State Management cho Word**
+   - [ ] Word context/state
+   - [ ] WordSet context/state
+   - [ ] CRUD actions và reducers
+
+### Tiếp theo:
+Sau khi hoàn thành Word Management, chúng ta sẽ tiến hành:
+
+1. Study System
+   - Flashcard interface
+   - Spaced repetition algorithm
+   - Progress tracking
+
+2. User Experience
+   - Mobile responsive design
+   - Dark mode
+   - Offline functionality
+
+---
 
 ## THÁNG 1: Thiết lập dự án và Backend Core
 
@@ -254,18 +350,18 @@ xml<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Ver
 - Cài đặt các packages cần thiết (EF Core, MediatR, AutoMapper)
 - Thiết lập Domain Entities và Value Objects
 
-### Tuần 2: Authentication và User Management
-**Ngày 8-10: Authentication**
-- Implement JWT authentication
-- User registration/login endpoints
-- Password hashing với BCrypt
-- Middleware authentication
+### Tuần 2: Authentication và User Management ✓
+**Ngày 8-10: Authentication ✓**
+- Implement JWT authentication ✓
+- User registration/login endpoints ✓
+- Password hashing với BCrypt ✓
+- Middleware authentication ✓
 
-**Ngày 11-14: User Management**
-- User profile management
-- User settings (study preferences)
-- Password reset functionality
-- Input validation và error handling
+**Ngày 11-14: User Management ✓**
+- User profile management ✓
+- User settings (study preferences) ✓
+- Password reset functionality ✓
+- Input validation và error handling ✓
 
 ### Tuần 3: Word Management System
 **Ngày 15-17: Word và WordSet entities**
@@ -479,7 +575,7 @@ xml<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Ver
 ### Development Tools
 - Visual Studio 2022 / VS Code
 - SQL Server Management Studio
-- Postman cho API testing
+- Swagger cho API testing
 - Git với GitHub
 
 ### Learning Resources

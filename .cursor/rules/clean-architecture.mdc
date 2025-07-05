@@ -7,21 +7,30 @@ alwaysApply: false
 
 This application follows Clean Architecture principles with the following layers:
 
+## 0. Constants Layer (EnglishVocab.Constants)
+
+- **Contains constants, enums and configuration used throughout the application**
+- No dependencies on other layers
+- Contains:
+  - Enum definitions (DifficultyLevel, MasteryLevel, StudyMode, UserRole)
+  - Shared constants
+
 ## 1. Domain Layer (EnglishVocab.Domain)
 
 - **Core business logic and entities**
-- No dependencies on other layers or external frameworks
+- Only depends on Constants layer
 - Contains:
-  - Entities
+  - Entities in Domain/ namespace
+  - Common types in Domain/Common/ (BaseEntity)
   - Value Objects
-  - Enums
   - Domain Events
   - Domain Exceptions
+  - Interfaces for domain services
 
 ## 2. Application Layer (EnglishVocab.Application)
 
 - **Use cases and application business rules**
-- Depends only on the Domain layer
+- Depends on Domain and Constants layers
 - Implements CQRS pattern (Command Query Responsibility Segregation):
   - Commands: modifying data
   - Queries: retrieving data
@@ -30,36 +39,52 @@ This application follows Clean Architecture principles with the following layers
   - DTOs (Data Transfer Objects)
   - Interface definitions for infrastructure services
   - Validation logic
+  - Services interfaces
 
-## 3. Infrastructure Layer (EnglishVocab.Infrastructure)
+## 3. Identity Layer (EnglishVocab.Identity)
+
+- **Authentication and authorization**
+- Depends on Application, Domain and Constants layers
+- Contains:
+  - Identity models (ApplicationUser, ApplicationRole)
+  - Identity database context
+  - Token services implementation
+  - Authentication services implementation
+  - User services implementation
+  - JWT settings and configuration
+
+## 4. Infrastructure Layer (EnglishVocab.Infrastructure)
 
 - **Technical details and implementations**
-- Depends on Application and Domain layers
+- Depends on Application, Domain and Constants layers
 - Contains:
-  - Database context and migrations
+  - Database context and configurations
   - Repository implementations
+  - Data persistence and Entity configurations
   - External services implementation
-  - Authentication services
-  - Caching
-  - Logging
+  - Audit trail tracking (UserAction)
+  - Logging and cross-cutting concerns
 
-## 4. Presentation Layer (EnglishVocab.API)
+## 5. Presentation Layer (EnglishVocab.API)
 
 - **User interface and API endpoints**
-- Depends on Application layer (not on Infrastructure or Domain directly)
+- Depends on Application, Identity and Infrastructure layers
 - Contains:
   - API Controllers
   - Middleware
   - Filters
   - Configuration
+  - Swagger documentation
 
 ## Dependency Flow
 
 ```
-API Layer → Application Layer → Domain Layer
-              ↑                    ↑
-              |                    |
-       Infrastructure Layer -------+
+API Layer → Application Layer → Domain Layer → Constants Layer
+    ↑             ↑               ↑
+    |             |               |
+    +--- Identity Layer ----------+
+    |                             |
+    +--- Infrastructure Layer ----+
 ```
 
 ## Guidelines for Development
@@ -69,7 +94,7 @@ API Layer → Application Layer → Domain Layer
    - Inner layers cannot depend on outer layers
 
 2. **Domain Layer Independence**
-   - Domain layer should be framework-agnostic
+   - Domain layer should only depend on Constants
    - No references to UI, database, or external services
 
 3. **Use Dependency Injection**
@@ -78,10 +103,16 @@ API Layer → Application Layer → Domain Layer
 
 4. **Communication between layers**
    - Use interfaces defined in the Application layer
-   - Infrastructure implements these interfaces
+   - Infrastructure and Identity implement these interfaces
    - API layer invokes commands/queries in the Application layer
 
-5. **CQRS Pattern**
+5. **Entity Design Conventions**
+   - All entities inherit from BaseEntity in Domain/Common
+   - ID type is long for performance and simplicity
+   - Tracking fields (CreatedBy, DateCreated, ModifiedBy, DateModified) in BaseEntity
+   - Changes tracking with UserAction entity
+
+6. **CQRS Pattern**
    - Commands: modify state, return nothing
    - Queries: return data, don't modify state
    - Use MediatR for dispatching commands and queries
