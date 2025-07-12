@@ -1,7 +1,11 @@
+using EnglishVocab.Application.Common.Interfaces;
 using EnglishVocab.Infrastructure.DatabaseContext;
+using EnglishVocab.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using AutoMapper;
 using System;
 
 namespace EnglishVocab.Infrastructure
@@ -32,13 +36,21 @@ namespace EnglishVocab.Infrastructure
                 options.EnableSensitiveDataLogging(false);
             });
 
-            // Đăng ký các repository
-            // services.AddScoped<IWordRepository, WordRepository>();
-            // services.AddScoped<IWordSetRepository, WordSetRepository>();
-            // services.AddScoped<IUserProgressRepository, UserProgressRepository>();
-            // services.AddScoped<IStudySessionRepository, StudySessionRepository>();
+            // Đăng ký IApplicationDbContext
+            services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<EnglishVocabDatabaseContext>());
 
-            // Đăng ký các services khác của Infrastructure
+            // Đăng ký các repository
+            services.AddScoped<IWordRepository, WordRepository>();
+            services.AddScoped<IWordSetRepository, WordSetRepository>();
+            services.AddScoped<IStudySessionRepository, StudySessionRepository>();
+            services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<IUserStatisticsRepository, UserStatisticsRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IDifficultyLevelRepository, DifficultyLevelRepository>();
+
+            // Đăng ký AutoMapper profile
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             return services;
         }

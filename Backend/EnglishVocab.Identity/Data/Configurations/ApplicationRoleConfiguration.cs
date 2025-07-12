@@ -20,7 +20,7 @@ namespace EnglishVocab.Identity.Data.Configurations
             builder.HasData(
                 new ApplicationRole
                 {
-                    Id = 1, // Fixed ID for Admin role
+                    Id = "1", // Fixed ID for Admin role as string
                     Name = UserRole.Admin.ToString(),
                     NormalizedName = UserRole.Admin.ToString().ToUpper(),
                     Description = "Quản trị viên có toàn quyền truy cập hệ thống",
@@ -28,7 +28,7 @@ namespace EnglishVocab.Identity.Data.Configurations
                 },
                 new ApplicationRole
                 {
-                    Id = 2, // Fixed ID for User role
+                    Id = "2", // Fixed ID for User role as string
                     Name = UserRole.User.ToString(),
                     NormalizedName = UserRole.User.ToString().ToUpper(),
                     Description = "Người dùng thông thường",

@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace EnglishVocab.Identity.Data.Dbcontext
 {
-    public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int, IdentityUserClaim<int>, IdentityUserRole<int>, IdentityUserLogin<int>, IdentityRoleClaim<int>, IdentityUserToken<int>>
+    public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         {
@@ -23,11 +23,11 @@ namespace EnglishVocab.Identity.Data.Dbcontext
             // Configure identity tables
             builder.Entity<ApplicationUser>().ToTable("AspNetUsers");
             builder.Entity<ApplicationRole>().ToTable("AspNetRoles");
-            builder.Entity<IdentityUserRole<int>>().ToTable("AspNetUserRoles");
-            builder.Entity<IdentityUserClaim<int>>().ToTable("AspNetUserClaims");
-            builder.Entity<IdentityUserLogin<int>>().ToTable("AspNetUserLogins");
-            builder.Entity<IdentityRoleClaim<int>>().ToTable("AspNetRoleClaims");
-            builder.Entity<IdentityUserToken<int>>().ToTable("AspNetUserTokens");
+            builder.Entity<IdentityUserRole<string>>().ToTable("AspNetUserRoles");
+            builder.Entity<IdentityUserClaim<string>>().ToTable("AspNetUserClaims");
+            builder.Entity<IdentityUserLogin<string>>().ToTable("AspNetUserLogins");
+            builder.Entity<IdentityRoleClaim<string>>().ToTable("AspNetRoleClaims");
+            builder.Entity<IdentityUserToken<string>>().ToTable("AspNetUserTokens");
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -40,7 +40,7 @@ namespace EnglishVocab.Identity.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("uid", user.Id.ToString())
+                new Claim("uid", user.Id)
             }
             .Union(userClaims)
             .Union(roleClaims);
@@ -60,7 +60,7 @@ namespace EnglishVocab.Identity.Services
 
         public async Task<TokenDto> GenerateAccessTokenAsync(UserDto user)
         {
-            var appUser = await _userManager.FindByIdAsync(user.Id.ToString());
+            var appUser = await _userManager.FindByIdAsync(user.Id);
             if (appUser == null)
             {
                 throw new ArgumentException($"User with ID {user.Id} not found");

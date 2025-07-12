@@ -4,12 +4,17 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.IO;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using EnglishVocab.API.Middleware;
+using Microsoft.AspNetCore.Builder;
 
 namespace EnglishVocab.API.Extensions
 {
     public static class ApiServiceExtensions
     {
-        public static IServiceCollection AddApiServices(this IServiceCollection services)
+        public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Đăng ký Controllers với tối ưu hiệu suất
             services.AddControllers(options =>
@@ -35,25 +40,16 @@ namespace EnglishVocab.API.Extensions
             // Đăng ký Swagger với tối ưu hiệu suất
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { 
-                    Title = "EnglishVocab API", 
-                    Version = "v1",
-                    Description = "API cho ứng dụng học từ vựng tiếng Anh",
-                    Contact = new OpenApiContact
-                    {
-                        Name = "EnglishVocab Team",
-                        Email = "contact@englishvocab.com",
-                    }
-                });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "EnglishVocab API", Version = "v1" });
                 
-                // Cấu hình Swagger để sử dụng JWT
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                // Cấu hình xác thực JWT cho Swagger không yêu cầu prefix "Bearer"
+                c.AddSecurityDefinition("JWT", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Description = "Nhập token JWT trực tiếp không cần thêm Bearer",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
+                    Scheme = "bearer", // Mặc định là bearer nhưng sẽ được xử lý ở phía server
                     BearerFormat = "JWT"
                 });
                 
@@ -65,10 +61,10 @@ namespace EnglishVocab.API.Extensions
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
+                                Id = "JWT"
                             }
                         },
-                        Array.Empty<string>()
+                        new List<string>()
                     }
                 });
 
@@ -88,9 +84,8 @@ namespace EnglishVocab.API.Extensions
             // Đăng ký CORS
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll",
-                    builder => builder
-                        .AllowAnyOrigin()
+                options.AddPolicy("CorsPolicy", builder =>
+                    builder.AllowAnyOrigin()
                         .AllowAnyMethod()
                         .AllowAnyHeader());
             });
@@ -102,7 +97,26 @@ namespace EnglishVocab.API.Extensions
                 options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(_ => "Trường này là bắt buộc.");
             });
 
+            // Add health checks
+            services.AddHealthChecks();
+
             return services;
+        }
+
+        public static IApplicationBuilder UseApiServices(this IApplicationBuilder app)
+        {
+            // Use custom exception handling middleware
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            // Use Swagger
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "EnglishVocab API V1");
+                c.RoutePrefix = "swagger";
+            });
+
+            return app;
         }
     }
 } 

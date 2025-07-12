@@ -31,10 +31,12 @@ namespace EnglishVocab.Identity.Services
         public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System";
         
         public string UserName => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? "System";
+        
+        public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
-        public async Task<UserDto> GetUserByIdAsync(int userId)
+        public async Task<UserDto> GetUserByIdAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return null;
 
@@ -61,10 +63,18 @@ namespace EnglishVocab.Identity.Services
             var roles = await _userManager.GetRolesAsync(user);
             return MapToUserDto(user, roles.ToArray());
         }
+        
+        public async Task<UserDto> GetCurrentUserAsync()
+        {
+            if (!IsAuthenticated)
+                return null;
+                
+            return await GetUserByIdAsync(UserId);
+        }
 
         public async Task<bool> UpdateUserAsync(UserDto userDto)
         {
-            var user = await _userManager.FindByIdAsync(userDto.Id.ToString());
+            var user = await _userManager.FindByIdAsync(userDto.Id);
             if (user == null)
                 return false;
 
@@ -79,27 +89,27 @@ namespace EnglishVocab.Identity.Services
             return result.Succeeded;
         }
 
-        public async Task<IEnumerable<string>> GetUserRolesAsync(int userId)
+        public async Task<IEnumerable<string>> GetUserRolesAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return new List<string>();
 
             return await _userManager.GetRolesAsync(user);
         }
 
-        public async Task<bool> IsInRoleAsync(int userId, string role)
+        public async Task<bool> IsInRoleAsync(string userId, string role)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return false;
 
             return await _userManager.IsInRoleAsync(user, role);
         }
 
-        public async Task<bool> UpdateUserRefreshTokenAsync(int userId, string refreshToken, DateTime expiryTime)
+        public async Task<bool> UpdateUserRefreshTokenAsync(string userId, string refreshToken, DateTime expiryTime)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return false;
 

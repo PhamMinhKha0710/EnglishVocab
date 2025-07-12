@@ -1,5 +1,5 @@
 using EnglishVocab.Constants.Constant;
-using EnglishVocab.Domain;
+using EnglishVocab.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -10,6 +10,25 @@ namespace EnglishVocab.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<WordSet> builder)
         {
+            // Basic configurations
+            builder.HasKey(ws => ws.Id);
+            
+            builder.Property(ws => ws.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(ws => ws.Description)
+                .HasMaxLength(500);
+
+            builder.Property(ws => ws.Category)
+                .HasMaxLength(50);
+
+            builder.Property(ws => ws.ImageUrl)
+                .HasMaxLength(255);
+            
+            builder.Property(ws => ws.CreatedByUserId)
+                .HasMaxLength(450); // Match AspNetUsers.Id length
+                
             // Seed data cho WordSet
             builder.HasData(
                 new WordSet
@@ -19,7 +38,9 @@ namespace EnglishVocab.Infrastructure.Configurations
                     Description = "Essential greetings and phrases for beginners",
                     Category = "Beginner",
                     IsPublic = true,
-                    UserId = 1,
+                    ImageUrl = "/images/wordsets/greetings.jpg",
+                    WordCount = 3, // Updated to match the number of seeded words
+                    CreatedByUserId = "1", // Admin user ID
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",
@@ -32,7 +53,9 @@ namespace EnglishVocab.Infrastructure.Configurations
                     Description = "Vocabulary related to food, restaurants, and dining",
                     Category = "Intermediate",
                     IsPublic = true,
-                    UserId = 1,
+                    ImageUrl = "/images/wordsets/food.jpg",
+                    WordCount = 0, // No words yet
+                    CreatedByUserId = "1", // Admin user ID
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",

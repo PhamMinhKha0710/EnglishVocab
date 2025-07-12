@@ -1,5 +1,4 @@
 using EnglishVocab.API.Extensions;
-using EnglishVocab.API.Middleware;
 using EnglishVocab.Application;
 using EnglishVocab.Identity;
 using EnglishVocab.Identity.Data;
@@ -9,6 +8,11 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using System.IO.Compression;
 using Serilog;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using EnglishVocab.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,8 +51,8 @@ builder.Services.AddMemoryCache();
 builder.Services.AddResponseCaching();
 
 // Đăng ký các services từ các layers
-builder.Services.AddApiServices();
-builder.Services.AddApplicationServices();
+builder.Services.AddApiServices(builder.Configuration);
+builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
 
@@ -77,6 +81,8 @@ else
 {
     // Chỉ sử dụng HTTPS Redirection trong môi trường production
     app.UseHsts();
+    // Use custom exception handling middleware
+    app.UseApiServices();
 }
 
 // Luôn bật HTTPS Redirection để đảm bảo kết nối an toàn

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
-using EnglishVocab.Application.Features.Auth.Commands;
+using EnglishVocab.Application.Common.Models;
+using EnglishVocab.Application.Features.Authentication.Commands;
 
 namespace EnglishVocab.Application.Common.Interfaces
 {
@@ -8,13 +9,14 @@ namespace EnglishVocab.Application.Common.Interfaces
         Task<AuthResponse> Login(LoginCommand request);
         Task<AuthResponse> Register(RegisterCommand request);
         Task<AuthResponse> RefreshToken(RefreshTokenCommand request);
-        Task<bool> RevokeToken(int userId);
-        Task<bool> Logout(int userId);
+        Task<TokenDto> RefreshTokenAsync(string accessToken, string refreshToken);
+        Task<bool> RevokeToken(string userId);
+        Task<bool> Logout(string userId);
     }
 
     public class AuthResponse
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
         public string FirstName { get; set; }

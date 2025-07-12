@@ -30,7 +30,7 @@ namespace EnglishVocab.Identity.Data.Configurations
             builder.HasData(
                 new ApplicationUser
                 {
-                    Id = 1, // Fixed ID for admin user
+                    Id = "1", // Fixed ID for admin user as string
                     Email = "admin@englishvocab.com",
                     NormalizedEmail = "ADMIN@ENGLISHVOCAB.COM",
                     FirstName = "System",

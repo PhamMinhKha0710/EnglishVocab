@@ -9,5 +9,8 @@ namespace EnglishVocab.Application.Common.Models
         public string Token { get; set; }
         public DateTime Expiration { get; set; }
         public IEnumerable<Claim> Claims { get; set; }
+        public bool IsAuthenticated { get; set; }
+        public string Username { get; set; }
+        public string Message { get; set; }
     }
 } 

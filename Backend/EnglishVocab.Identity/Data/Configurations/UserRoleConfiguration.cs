@@ -5,16 +5,16 @@ using System;
 
 namespace EnglishVocab.Identity.Data.Configurations
 {
-    public class UserRoleConfiguration : IEntityTypeConfiguration<IdentityUserRole<int>>
+    public class UserRoleConfiguration : IEntityTypeConfiguration<IdentityUserRole<string>>
     {
-        public void Configure(EntityTypeBuilder<IdentityUserRole<int>> builder)
+        public void Configure(EntityTypeBuilder<IdentityUserRole<string>> builder)
         {
             // We need to ensure these IDs match the ones in ApplicationUserConfiguration and ApplicationRoleConfiguration
-            var adminRoleId = 1; // Admin role ID
-            var adminUserId = 1; // Admin user ID
+            var adminRoleId = "1"; // Admin role ID
+            var adminUserId = "1"; // Admin user ID
             
             builder.HasData(
-                new IdentityUserRole<int>
+                new IdentityUserRole<string>
                 {
                     RoleId = adminRoleId,
                     UserId = adminUserId

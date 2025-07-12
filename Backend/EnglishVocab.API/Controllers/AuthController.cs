@@ -1,7 +1,8 @@
 using EnglishVocab.Application.Common.Interfaces;
 using EnglishVocab.Application.Common.Models;
+using EnglishVocab.Application.Features.Authentication.Commands;
+using EnglishVocab.Application.Features.Authentication.Queries;
 using EnglishVocab.Application.Features.Auth.Commands;
-using EnglishVocab.Application.Features.Auth.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -137,8 +138,8 @@ namespace EnglishVocab.API.Controllers
         public async Task<IActionResult> Logout()
         {
             // Lấy userId từ claim của token
-            var userIdClaim = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
                 _logger.LogWarning("Không thể lấy userId từ token");
                 return BadRequest(new { message = "Invalid user ID" });
@@ -158,26 +159,6 @@ namespace EnglishVocab.API.Controllers
             {
                 _logger.LogWarning("Đăng xuất thất bại cho userId: {UserId}", userId);
                 return BadRequest(new { message = "Logout failed" });
-            }
-        }
-
-        [HttpGet("user/{userId}")]
-        [Authorize]
-        public async Task<ActionResult<UserDto>> GetUserDetail(int userId)
-        {
-            _logger.LogInformation("Lấy thông tin user có id: {UserId}", userId);
-            var query = new GetUserDetailQuery(userId);
-            var result = await _mediator.Send(query);
-            
-            if (result != null)
-            {
-                _logger.LogInformation("Lấy thông tin thành công cho userId: {UserId}", userId);
-                return Ok(result);
-            }
-            else
-            {
-                _logger.LogWarning("Không tìm thấy user với id: {UserId}", userId);
-                return NotFound();
             }
         }
     }

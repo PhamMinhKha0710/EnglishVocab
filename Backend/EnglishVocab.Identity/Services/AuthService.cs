@@ -1,10 +1,12 @@
 using EnglishVocab.Application.Common.Interfaces;
-using EnglishVocab.Application.Features.Auth.Commands;
+using EnglishVocab.Application.Common.Models;
+using EnglishVocab.Application.Features.Authentication.Commands;
 using EnglishVocab.Constants.Constant;
 using EnglishVocab.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -32,6 +34,46 @@ namespace EnglishVocab.Identity.Services
             _roleManager = roleManager;
             _tokenService = tokenService;
             _logger = logger;
+        }
+
+        // Các phương thức khác giữ nguyên
+
+        public async Task<TokenDto> RefreshTokenAsync(string accessToken, string refreshToken)
+        {
+            // Kiểm tra và xác thực access token hết hạn
+            ClaimsPrincipal principal = _tokenService.GetPrincipalFromExpiredToken(accessToken);
+            if (principal == null)
+            {
+                throw new Exception("Invalid access token");
+            }
+
+            string userIdString = principal.FindFirstValue("uid");
+            
+            var user = await _userManager.FindByIdAsync(userIdString);
+
+            if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                throw new Exception("Invalid refresh token or token expired");
+            }
+
+            // Tạo token mới
+            var jwtSecurityToken = await _tokenService.GenerateAccessToken(user);
+            var newAccessToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+
+            // Tạo refresh token mới
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
+            
+            // Cập nhật refresh token mới
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+
+            return new TokenDto
+            {
+                Token = newAccessToken,
+                Expiration = jwtSecurityToken.ValidTo,
+                Claims = principal.Claims
+            };
         }
 
         public async Task<AuthResponse> Login(LoginCommand request)
@@ -212,14 +254,6 @@ namespace EnglishVocab.Identity.Services
             }
 
             string userIdString = principal.FindFirstValue("uid");
-            if (!int.TryParse(userIdString, out int userId))
-            {
-                return new AuthResponse
-                {
-                    IsAuthenticated = false,
-                    Message = "Invalid user ID in token"
-                };
-            }
             
             var user = await _userManager.FindByIdAsync(userIdString);
 
@@ -262,37 +296,30 @@ namespace EnglishVocab.Identity.Services
             };
         }
 
-        public async Task<bool> RevokeToken(int userId)
+        public async Task<bool> RevokeToken(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null)
+            try
             {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return false;
+
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = null;
+                var result = await _userManager.UpdateAsync(user);
+                return result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error revoking token for user {UserId}", userId);
                 return false;
             }
-            
-            // Xóa refresh token hiện tại
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow;
-            
-            var result = await _userManager.UpdateAsync(user);
-            return result.Succeeded;
         }
 
-        // Phương thức đăng xuất
-        public async Task<bool> Logout(int userId)
+        public async Task<bool> Logout(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null)
-            {
-                return false;
-            }
-            
-            // Xóa refresh token và đặt thời hạn hết hạn
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow;
-            
-            var result = await _userManager.UpdateAsync(user);
-            return result.Succeeded;
+            // Revoke refresh token when logging out
+            return await RevokeToken(userId);
         }
     }
 } 
