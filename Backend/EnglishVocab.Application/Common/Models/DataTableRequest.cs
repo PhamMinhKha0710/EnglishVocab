@@ -27,7 +27,7 @@ namespace EnglishVocab.Application.Common.Models
         /// <summary>
         /// Từ khóa tìm kiếm toàn cục
         /// </summary>
-        public string Search { get; set; } = string.Empty;
+        public string Search { get; set; } 
 
         /// <summary>
         /// Tìm kiếm theo từng cột cụ thể
@@ -48,6 +48,35 @@ namespace EnglishVocab.Application.Common.Models
         public int GetPageSize()
         {
             return Length;
+        }
+        
+        /// <summary>
+        /// Tạo DataTableRequest từ tham số phân trang phổ biến
+        /// </summary>
+        public static DataTableRequest FromPagination(int pageNumber, int pageSize, string sortBy = "Id", bool ascending = true)
+        {
+            return new DataTableRequest
+            {
+                Start = (pageNumber - 1) * pageSize,
+                Length = pageSize,
+                OrderBy = sortBy,
+                Order = ascending ? "asc" : "desc"
+            };
+        }
+        
+        /// <summary>
+        /// Chuyển đổi sang DataTableRequest từ tham số pageNumber, pageSize
+        /// </summary>
+        public void ConvertFromPagination(int pageNumber, int pageSize, string sortBy = null, bool? ascending = null)
+        {
+            Start = (pageNumber - 1) * pageSize;
+            Length = pageSize;
+            
+            if (!string.IsNullOrEmpty(sortBy))
+                OrderBy = sortBy;
+                
+            if (ascending.HasValue)
+                Order = ascending.Value ? "asc" : "desc";
         }
     }
 } 

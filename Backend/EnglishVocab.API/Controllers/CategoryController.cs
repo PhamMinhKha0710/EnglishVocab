@@ -5,6 +5,7 @@ using EnglishVocab.Application.Features.Categories.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace EnglishVocab.API.Controllers
@@ -22,18 +23,37 @@ namespace EnglishVocab.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<DataTableResponse<CategoryDto>>> GetCategories(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = "Name",
-            [FromQuery] bool ascending = true)
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
-            var query = new GetPaginatedCategoriesQuery
+            var query = new GetCategoriesQuery
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                SortBy = sortBy,
-                Ascending = ascending
+                UsePagination = false
+            };
+
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+        [HttpGet("paginated")]
+        [Authorize]
+        public async Task<ActionResult<DataTableResponse<CategoryDto>>> GetPaginatedCategories(
+            [FromQuery] int start = 0,
+            [FromQuery] int length = 10,
+            [FromQuery] string orderBy = "Name",
+            [FromQuery] string order = "asc",
+            [FromQuery] string search = null)
+        {
+            var query = new GetCategoriesQuery
+            {
+                UsePagination = true,
+                PaginationParams = new DataTableRequest
+                {
+                    Start = start,
+                    Length = length,
+                    OrderBy = orderBy,
+                    Order = order,
+                    Search = search
+                }
             };
 
             var result = await _mediator.Send(query);

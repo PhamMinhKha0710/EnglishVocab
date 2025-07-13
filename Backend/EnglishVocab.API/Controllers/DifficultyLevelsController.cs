@@ -24,21 +24,48 @@ namespace EnglishVocab.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DifficultyLevelDto>>> GetAll()
         {
-            var result = await _mediator.Send(new GetDifficultyLevelsQuery());
+            var query = new GetDifficultyLevelsQuery
+            {
+                UsePagination = false
+            };
+
+            var result = await _mediator.Send(query);
             return Ok(result);
         }
 
         [HttpGet("paginated")]
-        public async Task<ActionResult<DataTableResponse<DifficultyLevelDto>>> GetPaginated([FromQuery] GetPaginatedDifficultyLevelsQuery query)
+        public async Task<ActionResult<DataTableResponse<DifficultyLevelDto>>> GetPaginated(
+            [FromQuery] int start = 0,
+            [FromQuery] int length = 10,
+            [FromQuery] string orderBy = "Value",
+            [FromQuery] string order = "asc",
+            [FromQuery] string search = null)
         {
+            var query = new GetDifficultyLevelsQuery
+            {
+                UsePagination = true,
+                PaginationParams = new DataTableRequest
+                {
+                    Start = start,
+                    Length = length,
+                    OrderBy = orderBy,
+                    Order = order,
+                    Search = search
+                }
+            };
+
             var result = await _mediator.Send(query);
             return Ok(result);
         }
 
-        [HttpPost("datatable")]
-        public async Task<ActionResult<DataTableResponse<DifficultyLevelDto>>> GetDataTable([FromBody] GetDataTableDifficultyLevelsQuery query)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<DifficultyLevelDto>> GetById(int id)
         {
-            var result = await _mediator.Send(query);
+            var result = await _mediator.Send(new GetDifficultyLevelByIdQuery { Id = id });
+            
+            if (result == null)
+                return NotFound();
+                
             return Ok(result);
         }
 
@@ -50,32 +77,32 @@ namespace EnglishVocab.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<DifficultyLevelDto>> GetById(int id)
-        {
-            var result = await _mediator.Send(new GetDifficultyLevelByIdQuery { Id = id });
-            return Ok(result);
-        }
-
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<DifficultyLevelDto>> Update(int id, [FromBody] UpdateDifficultyLevelCommand command)
         {
             if (id != command.Id)
-            {
-                return BadRequest();
-            }
-
+                return BadRequest("ID mismatch");
+                
             var result = await _mediator.Send(command);
+            
+            if (result == null)
+                return NotFound();
+                
             return Ok(result);
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<ActionResult<bool>> Delete(int id)
         {
-            await _mediator.Send(new DeleteDifficultyLevelCommand { Id = id });
-            return NoContent();
+            var command = new DeleteDifficultyLevelCommand { Id = id };
+            var result = await _mediator.Send(command);
+            
+            if (!result)
+                return NotFound();
+                
+            return Ok(true);
         }
     }
 } 

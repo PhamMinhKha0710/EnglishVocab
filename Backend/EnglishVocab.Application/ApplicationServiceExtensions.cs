@@ -30,7 +30,6 @@ namespace EnglishVocab.Application
             services.AddScoped<IWordService, WordService>();
             services.AddScoped<IStudyService, StudyService>();
             services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
-            services.AddScoped<IPaginationService, Common.Services.PaginationService>();
             services.AddScoped<IDataTableService, DataTableService>();
 
             return services;

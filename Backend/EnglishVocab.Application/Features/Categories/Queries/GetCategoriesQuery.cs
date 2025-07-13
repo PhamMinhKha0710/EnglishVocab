@@ -1,10 +1,43 @@
+using EnglishVocab.Application.Common.Models;
 using EnglishVocab.Application.Features.Categories.DTOs;
+using FluentValidation;
 using MediatR;
 using System.Collections.Generic;
 
 namespace EnglishVocab.Application.Features.Categories.Queries
 {
-    public class GetCategoriesQuery : IRequest<IEnumerable<CategoryDto>>
+    public class GetCategoriesQuery : IRequest<object>
     {
+        /// <summary>
+        /// Xác định có sử dụng phân trang hay không
+        /// </summary>
+        public bool UsePagination { get; set; } = false;
+
+        /// <summary>
+        /// Tham số phân trang (nếu UsePagination = true)
+        /// </summary>
+        public DataTableRequest PaginationParams { get; set; } = new DataTableRequest();
+    }
+
+    public class GetCategoriesQueryValidator : AbstractValidator<GetCategoriesQuery>
+    {
+        public GetCategoriesQueryValidator()
+        {
+            When(x => x.UsePagination, () => 
+            {
+                RuleFor(x => x.PaginationParams.Start)
+                    .GreaterThanOrEqualTo(0)
+                    .WithMessage("Start must be greater than or equal to 0.");
+
+                RuleFor(x => x.PaginationParams.Length)
+                    .GreaterThan(0)
+                    .LessThanOrEqualTo(100)
+                    .WithMessage("Length must be between 1 and 100.");
+                    
+                RuleFor(x => x.PaginationParams.OrderBy)
+                    .Must(sortBy => sortBy == "Name" || sortBy == "WordCount" || sortBy == "Id")
+                    .WithMessage("OrderBy must be one of: Name, WordCount, Id.");
+            });
+        }
     }
 } 

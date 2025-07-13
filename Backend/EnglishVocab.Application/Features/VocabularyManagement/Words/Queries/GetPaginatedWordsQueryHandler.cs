@@ -13,16 +13,16 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.Queries
     {
         private readonly IWordRepository _wordRepository;
         private readonly IMapper _mapper;
-        private readonly IPaginationService _paginationService;
+        private readonly IDataTableService _dataTableService;
 
         public GetPaginatedWordsQueryHandler(
             IWordRepository wordRepository, 
             IMapper mapper,
-            IPaginationService paginationService)
+            IDataTableService dataTableService)
         {
             _wordRepository = wordRepository;
             _mapper = mapper;
-            _paginationService = paginationService;
+            _dataTableService = dataTableService;
         }
 
         public async Task<DataTableResponse<WordDto>> Handle(GetPaginatedWordsQuery request, CancellationToken cancellationToken)
@@ -53,13 +53,21 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.Queries
             // Chuyển đổi sang DTO trước khi phân trang
             var dtoQuery = query.Select(w => _mapper.Map<WordDto>(w));
 
-            // Sử dụng IPaginationService để phân trang
-            return await _paginationService.CreatePaginatedListAsync(
+            // Chuyển đổi từ PaginatedQuery sang DataTableRequest
+            var dataTableRequest = new DataTableRequest
+            {
+                Start = (request.PageNumber - 1) * request.PageSize,
+                Length = request.PageSize,
+                OrderBy = request.SortBy,
+                Order = request.Ascending ? "asc" : "desc"
+            };
+            
+            // Sử dụng DataTableService thay cho PaginationService
+            return await _dataTableService.CreateResponseAsync(
                 dtoQuery,
-                request.PageNumber,
-                request.PageSize,
-                request.SortBy,
-                request.Ascending);
+                dataTableRequest,
+                cancellationToken
+            );
         }
     }
 } 
