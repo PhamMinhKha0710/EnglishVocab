@@ -41,8 +41,8 @@ export default function ProfilePage() {
       console.log("Đang tải thông tin mới nhất của người dùng...");
       const API_URL = "http://localhost:7010/api";
       
-      // Sử dụng Auth/user/{userId} endpoint thay vì UserProfile/me
-      const endpoint = `${API_URL}/Auth/user/${user.id}`;
+      // Sử dụng UserProfile/me endpoint thay vì Auth/user/{userId}
+      const endpoint = `${API_URL}/UserProfile/me`;
       console.log("Gọi API với endpoint:", endpoint);
       
       const result = await apiService.fetchWithAuth(
