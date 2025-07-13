@@ -42,7 +42,7 @@ interface RefreshTokenParams {
 
 // Interface cho tham số cập nhật hồ sơ người dùng
 export interface UpdateProfileParams {
-  userId?: number;
+  userId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -54,7 +54,7 @@ export interface UpdateProfileResponse {
   succeeded: boolean;
   message: string;
   user?: {
-    id: number;
+    id: string;
     username: string;
     email: string;
     firstName: string;
@@ -66,7 +66,7 @@ export interface UpdateProfileResponse {
 
 // Interface cho user được trả về từ API
 export interface AuthUser {
-  id: number;
+  id: string;
   username: string;
   email: string;
   firstName: string;
@@ -78,37 +78,11 @@ export interface AuthUser {
   message: string;
 }
 
-// Hàm che giấu thông tin nhạy cảm trong logs
-const maskSensitiveData = (data: any) => {
-  if (!data) return data;
-  
-  const maskedData = { ...data };
-  
-  // Che giấu mật khẩu
-  if (maskedData.password) maskedData.password = "********";
-  if (maskedData.Password) maskedData.Password = "********";
-  if (maskedData.confirmPassword) maskedData.confirmPassword = "********";
-  
-  // Che giấu tokens
-  if (maskedData.accessToken) maskedData.accessToken = "********";
-  if (maskedData.refreshToken) maskedData.refreshToken = "********";
-  if (maskedData.AccessToken) maskedData.AccessToken = "********";
-  if (maskedData.RefreshToken) maskedData.RefreshToken = "********";
-  
-  return maskedData;
-};
-
 // Service gọi API
 export const apiService = {
   // Đăng ký người dùng mới
   async register(params: RegisterParams): Promise<{ succeeded: boolean; message: string; errors?: string[] }> {
     try {
-      // Che giấu thông tin nhạy cảm trong logs
-      console.log("Register attempt with:", maskSensitiveData({
-        username: params.username,
-        email: params.email
-      }));
-      
       const response = await fetch(`${API_URL}/Auth/register`, {
         method: "POST",
         headers: {
@@ -117,16 +91,21 @@ export const apiService = {
         body: JSON.stringify(params),
       });
 
-      console.log("Register response status:", response.status);
       const data = await response.json();
+
+      // Đảm bảo trả về đúng định dạng
+      const result = {
+        succeeded: response.ok && (data.isAuthenticated === true || data.succeeded === true),
+        message: data.message || (response.ok ? "Đăng ký thành công" : "Đăng ký thất bại"),
+        errors: data.errors
+      };
 
       if (!response.ok) {
         throw new Error(data.message || "Đăng ký thất bại");
       }
 
-      return data;
+      return result;
     } catch (error: any) {
-      console.error("Register error:", error.message);
       throw new Error(error.message || "Đã xảy ra lỗi khi đăng ký");
     }
   },
@@ -134,11 +113,6 @@ export const apiService = {
   // Đăng nhập người dùng
   async login(params: LoginParams): Promise<AuthUser> {
     try {
-      // Che giấu thông tin nhạy cảm trong logs
-      console.log("Login attempt with:", maskSensitiveData({
-        email: params.email
-      }));
-      
       const response = await fetch(`${API_URL}/Auth/login`, {
         method: "POST",
         headers: {
@@ -147,41 +121,51 @@ export const apiService = {
         body: JSON.stringify(params),
       });
 
-      console.log("Login response status:", response.status);
-      const rawData = await response.json();
+      console.log("Login status code:", response.status);
       
-      // Xử lý phản hồi API - đảm bảo các trường có giá trị phù hợp
-      // Lưu ý chữ hoa/chữ thường của các thuộc tính từ API
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Email hoặc mật khẩu không chính xác");
+        }
+        throw new Error(`Lỗi ${response.status}: Không thể đăng nhập`);
+      }
+
+      const rawData = await response.json();
+      console.log("Login response data keys:", Object.keys(rawData));
+      
+      // Đảm bảo chuyển đổi cả chữ hoa và chữ thường
       const data: AuthUser = {
-        id: rawData.Id || 0,
-        username: rawData.Username || "",
-        email: rawData.Email || "",
-        firstName: rawData.FirstName || "",
-        lastName: rawData.LastName || "",
-        roles: Array.isArray(rawData.Roles) ? rawData.Roles : 
+        id: rawData.id || rawData.Id || "",
+        username: rawData.username || rawData.Username || "",
+        email: rawData.email || rawData.Email || "",
+        firstName: rawData.firstName || rawData.FirstName || "",
+        lastName: rawData.lastName || rawData.LastName || "",
+        roles: Array.isArray(rawData.roles) ? rawData.roles : 
+               Array.isArray(rawData.Roles) ? rawData.Roles :
+               rawData.roles ? [rawData.roles] : 
                rawData.Roles ? [rawData.Roles] : [],
-        isAuthenticated: rawData.IsAuthenticated === true, // Sửa chữ I viết hoa
-        accessToken: rawData.AccessToken || "",
-        refreshToken: rawData.RefreshToken || "",
-        message: rawData.Message || ""
+        isAuthenticated: rawData.isAuthenticated === true || rawData.IsAuthenticated === true,
+        accessToken: rawData.accessToken || rawData.AccessToken || "",
+        refreshToken: rawData.refreshToken || rawData.RefreshToken || "",
+        message: rawData.message || rawData.Message || ""
       };
 
-      if (!response.ok) {
+      console.log("Xác thực thành công:", data.isAuthenticated);
+
+      if (!data.isAuthenticated) {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
 
       return data;
     } catch (error: any) {
-      console.error("Login error:", error.message);
-      throw new Error(error.message || "Đã xảy ra lỗi khi đăng nhập");
+      console.error("Lỗi đăng nhập:", error.message);
+      throw error;
     }
   },
 
   // Làm mới token
   async refreshToken(params: RefreshTokenParams): Promise<AuthUser> {
     try {
-      console.log("Refreshing token");
-      
       const response = await fetch(`${API_URL}/Auth/refresh`, {
         method: "POST",
         headers: {
@@ -190,7 +174,6 @@ export const apiService = {
         body: JSON.stringify(params),
       });
 
-      console.log("Refresh token response status:", response.status);
       const data = await response.json();
 
       if (!response.ok) {
@@ -199,7 +182,6 @@ export const apiService = {
 
       return data;
     } catch (error: any) {
-      console.error("Refresh token error:", error.message);
       throw new Error(error.message || "Đã xảy ra lỗi khi làm mới token");
     }
   },
@@ -207,8 +189,6 @@ export const apiService = {
   // Đăng xuất (gọi API server)
   async logout(token: string): Promise<boolean> {
     try {
-      console.log("Logging out on server");
-      
       const response = await fetch(`${API_URL}/Auth/logout`, {
         method: "POST",
         headers: {
@@ -216,23 +196,66 @@ export const apiService = {
           "Content-Type": "application/json",
         },
       });
-
-      console.log("Logout response status:", response.status);
       
       // Ngay cả khi server lỗi, chúng ta vẫn cần đăng xuất client
       return response.ok;
     } catch (error: any) {
-      console.error("Logout error:", error.message);
       // Ngay cả khi có lỗi, chúng ta vẫn trả về true để frontend xóa token local
       return true;
+    }
+  },
+
+  // Lấy thông tin hồ sơ người dùng hiện tại
+  async getUserProfile(token: string): Promise<any> {
+    try {
+      // Kiểm tra token
+      if (!token) {
+        throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
+      }
+
+      console.log("Gửi yêu cầu lấy thông tin hồ sơ người dùng");
+
+      const response = await fetch(`${API_URL}/UserProfile/me`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Get profile status code:", response.status);
+
+      // Xử lý các trường hợp lỗi cụ thể
+      if (response.status === 401) {
+        throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+      }
+
+      if (response.status === 404) {
+        throw new Error("Không tìm thấy thông tin người dùng.");
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Lỗi ${response.status}: Không thể tải thông tin hồ sơ`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error("Lỗi lấy thông tin hồ sơ:", error.message);
+      throw error;
     }
   },
 
   // Cập nhật hồ sơ người dùng
   async updateProfile(params: UpdateProfileParams, token: string): Promise<UpdateProfileResponse> {
     try {
-      console.log("Updating profile for user:", params.username);
-      
+      // Kiểm tra token
+      if (!token) {
+        throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
+      }
+
+      console.log("Gửi yêu cầu cập nhật hồ sơ cho:", params.username);
+
       const response = await fetch(`${API_URL}/UserProfile/me`, {
         method: "PUT",
         headers: {
@@ -242,15 +265,31 @@ export const apiService = {
         body: JSON.stringify(params),
       });
 
-      console.log("Update profile response status:", response.status);
+      console.log("Update profile status code:", response.status);
+
+      // Xử lý các trường hợp lỗi cụ thể
+      if (response.status === 401) {
+        throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+      }
+
+      if (response.status === 403) {
+        throw new Error("Bạn không có quyền cập nhật hồ sơ này.");
+      }
+      
       const rawData = await response.json();
+      console.log("Update profile response:", rawData);
+
+      if (!response.ok) {
+        throw new Error(rawData.message || `Lỗi ${response.status}: Không thể cập nhật hồ sơ`);
+      }
       
       // Xử lý phản hồi API - đảm bảo các trường có giá trị phù hợp
+      // Force succeeded = true nếu API trả về 200 OK
       const data: UpdateProfileResponse = {
-        succeeded: response.ok,
-        message: rawData.message || (response.ok ? "Cập nhật hồ sơ thành công" : "Cập nhật hồ sơ thất bại"),
+        succeeded: true, // Luôn coi là thành công nếu đã qua được các kiểm tra lỗi ở trên
+        message: "Cập nhật hồ sơ thành công",
         user: rawData.user ? {
-          id: rawData.user.id || 0,
+          id: rawData.user.id || "",
           username: rawData.user.username || params.username,
           email: rawData.user.email || params.email,
           firstName: rawData.user.firstName || params.firstName,
@@ -258,17 +297,22 @@ export const apiService = {
           roles: Array.isArray(rawData.user.roles) ? rawData.user.roles : 
                  rawData.user.roles ? [rawData.user.roles] : [],
           fullName: rawData.user.fullName || `${params.firstName} ${params.lastName}`
-        } : undefined
+        } : {
+          // Nếu không có thông tin user từ API, tạo từ dữ liệu đầu vào
+          id: params.userId || "",
+          username: params.username,
+          email: params.email,
+          firstName: params.firstName,
+          lastName: params.lastName,
+          roles: [],
+          fullName: `${params.firstName} ${params.lastName}`
+        }
       };
-
-      if (!response.ok) {
-        throw new Error(data.message || "Cập nhật hồ sơ thất bại");
-      }
 
       return data;
     } catch (error: any) {
-      console.error("Update profile error:", error.message);
-      throw new Error(error.message || "Đã xảy ra lỗi khi cập nhật hồ sơ");
+      console.error("Lỗi cập nhật hồ sơ:", error.message);
+      throw error;
     }
   },
 
@@ -283,6 +327,8 @@ export const apiService = {
   // Gọi API với token xác thực
   async fetchWithAuth(url: string, options: RequestInit = {}, token: string): Promise<any> {
     try {
+      console.log(`Gọi API: ${url}, phương thức: ${options.method || 'GET'}`);
+      
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -291,19 +337,40 @@ export const apiService = {
         },
       });
 
+      console.log(`Kết quả API ${url}: ${response.status} ${response.statusText}`);
+
       // Kiểm tra nếu token hết hạn (401 Unauthorized)
       if (response.status === 401) {
         return this.handleTokenExpiration(url, options, token);
       }
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "API call failed");
+      // Trường hợp không có dữ liệu trả về (204 No Content hoặc DELETE thành công)
+      if (response.status === 204) {
+        return { succeeded: true };
       }
 
-      return await response.json();
+      // Một số API trả về chuỗi rỗng cho các yêu cầu thành công
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        // Kiểm tra dữ liệu trả về có phải JSON không
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+        
+        if (!response.ok) {
+          throw new Error(data.message || "API call failed");
+        }
+        
+        return data;
+      } else {
+        // Không phải JSON hoặc body rỗng
+        if (!response.ok) {
+          throw new Error("API call failed");
+        }
+        
+        return { succeeded: true };
+      }
     } catch (error: any) {
-      console.error("API call error:", error.message);
+      console.error("Lỗi gọi API:", error.message);
       throw error;
     }
   },

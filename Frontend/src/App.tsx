@@ -5,6 +5,8 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { GuestRoute } from './components/auth/GuestRoute'
 import { Toaster } from './components/ui/toaster'
 import { AuthProvider } from './contexts/auth-context'
+import { StagewiseToolbar } from '@stagewise/toolbar-react'
+import ReactPlugin from '@stagewise-plugins/react'
 
 // Pages
 import HomePage from './app/page'
@@ -22,6 +24,9 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Toaster />
+      {import.meta.env.DEV && (
+        <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
+      )}
       <BrowserRouter>
       <AuthProvider>
           <Routes>

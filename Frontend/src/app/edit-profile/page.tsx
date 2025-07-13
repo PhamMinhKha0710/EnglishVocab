@@ -142,8 +142,10 @@ export default function EditProfilePage() {
           variant: "default",
         })
         
-        // Chuyển hướng ngay lập tức đến trang hồ sơ
-        navigate("/profile")
+        // Sử dụng setTimeout để cho phép toast hiển thị trước khi chuyển hướng
+        setTimeout(() => {
+          navigate("/profile", { replace: true })
+        }, 500)
       })
       
       if (!success) {

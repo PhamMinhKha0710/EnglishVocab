@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
@@ -17,30 +17,76 @@ import {
   Clock,
   TrendingUp
 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
+import { apiService } from "@/services/api-service"
 
 export default function ProfilePage() {
   const { user, logout, isAuthenticated, refreshUserData } = useAuth()
   const navigate = useNavigate()
   const [isClient, setIsClient] = useState(false)
+  const location = useLocation()
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [dataFetched, setDataFetched] = useState(false)
+  
+  // Sử dụng useCallback để tránh tạo lại hàm ở mỗi render
+  const fetchLatestUserData = useCallback(async () => {
+    if (!user || !user.accessToken || isLoadingProfile || dataFetched) return;
+    
+    setIsLoadingProfile(true);
+    try {
+      console.log("Đang tải thông tin mới nhất của người dùng...");
+      const API_URL = "http://localhost:7010/api";
+      
+      // Sử dụng Auth/user/{userId} endpoint thay vì UserProfile/me
+      const endpoint = `${API_URL}/Auth/user/${user.id}`;
+      console.log("Gọi API với endpoint:", endpoint);
+      
+      const result = await apiService.fetchWithAuth(
+        endpoint,
+        { method: "GET" },
+        user.accessToken
+      );
+      
+      if (result) {
+        console.log("Đã nhận được dữ liệu mới:", result);
+        // Refresh dữ liệu người dùng từ localStorage
+        refreshUserData();
+        setDataFetched(true);
+      }
+    } catch (error) {
+      console.error("Không thể tải thông tin người dùng:", error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, [user, refreshUserData, isLoadingProfile, dataFetched]);
 
+  // Kiểm tra xác thực khi trang được tải
   useEffect(() => {
     setIsClient(true)
+    
     // Nếu không đăng nhập, chuyển hướng đến trang đăng nhập
     if (!isAuthenticated && isClient) {
       navigate("/auth/login")
-      return
+    }
+  }, [isAuthenticated, navigate, isClient])
+
+  // Chỉ tải dữ liệu khi trang được tải lần đầu tiên, sau khi đăng nhập thành công
+  useEffect(() => {
+    if (isAuthenticated && isClient && !dataFetched) {
+      fetchLatestUserData();
     }
     
-    // Làm mới dữ liệu người dùng khi trang được tải
-    if (isAuthenticated) {
-      refreshUserData()
-    }
-  }, [isAuthenticated, navigate, isClient, refreshUserData])
+    // Reset dataFetched flag when location changes (navigation)
+    return () => {
+      if (location.pathname !== '/profile') {
+        setDataFetched(false);
+      }
+    };
+  }, [isAuthenticated, isClient, fetchLatestUserData, location, dataFetched]);
 
   // Tạo chữ cái đầu từ tên người dùng cho avatar fallback
   const getInitials = () => {

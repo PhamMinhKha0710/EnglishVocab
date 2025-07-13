@@ -84,3 +84,10 @@ appsettings.Local.json
 *.mdf
 *.ldf
 *.ndf
+
+# Docker
+docker-compose.yml
+Dockerfile
+
+.cursorignore
+.cursorrules

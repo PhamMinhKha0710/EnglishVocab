@@ -43,21 +43,34 @@ export default function RegisterPage() {
 
     try {
       // Gọi hàm register từ AuthContext
+      console.log("Đang gọi API đăng ký...")
       const success = await register({
         firstName,
         lastName,
         email,
         username: username || email.split('@')[0], // Nếu không có username, lấy phần trước @ của email
-        password
+        password,
+        confirmPassword
       })
       
+      console.log("Kết quả đăng ký:", success)
+      
       if (success) {
+        console.log("Đăng ký thành công, đang chuyển hướng đến /auth/login")
         // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
         navigate("/auth/login")
+        console.log("Đã gọi navigate")
+        
+        // Thêm phương pháp chuyển hướng thay thế sau 500ms nếu navigate không hoạt động
+        setTimeout(() => {
+          console.log("Sử dụng phương pháp chuyển hướng thay thế")
+          window.location.href = "/auth/login"
+        }, 500)
       } else {
         setError("Đăng ký không thành công. Vui lòng thử lại sau.")
       }
     } catch (err: any) {
+      console.error("Lỗi khi đăng ký:", err)
       setError(err.message || "Đăng ký không thành công. Vui lòng thử lại sau.")
     } finally {
       setIsLoading(false)
