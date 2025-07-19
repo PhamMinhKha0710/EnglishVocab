@@ -1,3 +1,4 @@
+using EnglishVocab.Constants.Constant;
 using EnglishVocab.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -9,27 +10,31 @@ namespace EnglishVocab.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<DifficultyLevel> builder)
         {
-            // Basic configurations
             builder.HasKey(d => d.Id);
+            
+            // Vô hiệu hóa tính năng tự tăng cho cột ID
+            builder.Property(d => d.Id)
+                .ValueGeneratedNever();
             
             builder.Property(d => d.Name)
                 .IsRequired()
                 .HasMaxLength(50);
 
             builder.Property(d => d.Description)
-                .HasMaxLength(255);
+                .HasMaxLength(200);
                 
             builder.Property(d => d.Value)
                 .IsRequired();
 
-            // Seed data for difficulty levels
+            
+            // Seed data cho DifficultyLevels - cần có cho WordConfiguration
             builder.HasData(
                 new DifficultyLevel
                 {
-                    Id = 1,
+                    Id = (int)DifficultyLevelType.Easy,
                     Name = "Easy",
-                    Description = "Words that are commonly used in everyday conversations",
-                    Value = 1,
+                    Description = "Basic vocabulary for beginners",
+                    Value = (int)DifficultyLevelType.Easy,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",
@@ -37,10 +42,10 @@ namespace EnglishVocab.Infrastructure.Configurations
                 },
                 new DifficultyLevel
                 {
-                    Id = 2,
+                    Id = (int)DifficultyLevelType.Medium,
                     Name = "Medium",
-                    Description = "Words that are used in general contexts but less frequently",
-                    Value = 2,
+                    Description = "Intermediate vocabulary",
+                    Value = (int)DifficultyLevelType.Medium,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",
@@ -48,10 +53,21 @@ namespace EnglishVocab.Infrastructure.Configurations
                 },
                 new DifficultyLevel
                 {
-                    Id = 3,
+                    Id = (int)DifficultyLevelType.Hard,
                     Name = "Hard",
-                    Description = "Words that are specialized or rarely used in everyday language",
-                    Value = 3,
+                    Description = "Advanced vocabulary",
+                    Value = (int)DifficultyLevelType.Hard,
+                    DateCreated = DateTime.Now,
+                    CreatedBy = "System",
+                    ModifiedBy = "System",
+                    DateModified = DateTime.Now
+                },
+                new DifficultyLevel
+                {
+                    Id = (int)DifficultyLevelType.VeryHard,
+                    Name = "Very Hard",
+                    Description = "Expert level vocabulary",
+                    Value = (int)DifficultyLevelType.VeryHard,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",

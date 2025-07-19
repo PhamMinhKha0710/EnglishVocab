@@ -3,6 +3,7 @@ using EnglishVocab.Application.Common.Interfaces;
 using EnglishVocab.Application.Common.Models;
 using EnglishVocab.Application.Features.Categories.DTOs;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,45 +14,68 @@ namespace EnglishVocab.Application.Features.Categories.Queries
     public class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, object>
     {
         private readonly ICategoryRepository _categoryRepository;
-        private readonly IWordRepository _wordRepository;
         private readonly IDataTableService _dataTableService;
         private readonly IMapper _mapper;
 
         public GetCategoriesQueryHandler(
             ICategoryRepository categoryRepository, 
-            IWordRepository wordRepository,
             IDataTableService dataTableService,
             IMapper mapper)
         {
             _categoryRepository = categoryRepository;
-            _wordRepository = wordRepository;
             _dataTableService = dataTableService;
             _mapper = mapper;
         }
 
         public async Task<object> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
         {
-            // Lấy tất cả categories và đếm số lượng từ trong mỗi category
-            var categoriesWithCounts = await _wordRepository.GetCategoriesWithCountsAsync();
-            
-            // Tạo danh sách CategoryDto
-            var categoryDtos = categoriesWithCounts.Select(c => new CategoryDto 
-            { 
-                Name = c.Key, 
-                WordCount = c.Value 
-            }).ToList();
+            // Kiểm tra yêu cầu phân trang
+            bool usePagination = request.UsePagination && 
+                               request.PaginationParams != null && 
+                               request.PaginationParams.IsPagingRequest();
 
-            // Nếu không sử dụng phân trang, trả về toàn bộ danh sách
-            if (!request.UsePagination)
+            // Đảm bảo tham số phân trang được chuẩn hóa
+            if (usePagination)
             {
-                return categoryDtos;
+                request.PaginationParams.NormalizeRequest();
             }
 
-            // Nếu sử dụng phân trang, tạo DataTableResponse
-            return await _dataTableService.CreateResponseAsync(
-                categoryDtos, 
-                request.PaginationParams,
-                cancellationToken);
+            // Lấy danh sách danh mục từ repository
+            var categories = await _categoryRepository.GetAllAsync(cancellationToken);
+            
+            // Nếu có tìm kiếm, lọc kết quả
+            if (!string.IsNullOrWhiteSpace(request.PaginationParams?.Search))
+            {
+                var searchTerm = request.PaginationParams.Search.ToLower();
+                categories = categories.Where(c => 
+                    c.Name.ToLower().Contains(searchTerm) || 
+                    (c.Description != null && c.Description.ToLower().Contains(searchTerm))
+                ).ToList();
+            }
+            
+            // Ánh xạ sang DTO
+            var dtoList = _mapper.Map<List<CategoryDto>>(categories);
+
+            // Nếu không sử dụng phân trang, trả về toàn bộ danh sách
+            if (!usePagination)
+            {
+                return dtoList;
+            }
+
+            // Chuyển đổi từ DataTableRequest sang PaginationParameters
+            var paginationParams = new PaginationParameters
+            {
+                PageNumber = request.PaginationParams.GetPageNumber(),
+                PageSize = request.PaginationParams.Length,
+                Search = request.PaginationParams.Search,
+                OrderBy = request.PaginationParams.OrderBy,
+                OrderDirection = request.PaginationParams.Order
+            };
+
+            // Sử dụng DataTableService để áp dụng phân trang và sắp xếp
+            return _dataTableService.CreatePaginatedResponse(
+                dtoList.AsQueryable(),
+                paginationParams);
         }
     }
 } 

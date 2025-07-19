@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EnglishVocab.Identity.Migrations
 {
     /// <inheritdoc />
-    public partial class NewV1 : Migration
+    public partial class V1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -172,14 +172,14 @@ namespace EnglishVocab.Identity.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "CreatedAt", "Description", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "1", null, new DateTime(2025, 7, 12, 22, 1, 39, 74, DateTimeKind.Utc).AddTicks(5547), "Quản trị viên có toàn quyền truy cập hệ thống", "Admin", "ADMIN" },
-                    { "2", null, new DateTime(2025, 7, 12, 22, 1, 39, 74, DateTimeKind.Utc).AddTicks(5649), "Người dùng thông thường", "User", "USER" }
+                    { "1", null, new DateTime(2025, 7, 17, 13, 55, 50, 737, DateTimeKind.Utc).AddTicks(2010), "Quản trị viên có toàn quyền truy cập hệ thống", "Admin", "ADMIN" },
+                    { "2", null, new DateTime(2025, 7, 17, 13, 55, 50, 737, DateTimeKind.Utc).AddTicks(2251), "Người dùng thông thường", "User", "USER" }
                 });
 
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "IsActive", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "SecurityStamp", "TwoFactorEnabled", "UpdatedAt", "UserName" },
-                values: new object[] { "1", 0, "7efa2b13-7ff0-4e5a-8e3e-99edc8f25806", new DateTime(2025, 7, 12, 22, 1, 39, 122, DateTimeKind.Utc).AddTicks(9536), "admin@englishvocab.com", true, "System", true, "Administrator", false, null, "ADMIN@ENGLISHVOCAB.COM", "ADMIN", "AQAAAAIAAYagAAAAEHGb8oygWHLqkij7MUg0p8wmFciG7/ivCu76OX4ZxlZwnUMviyCePlCWwJOXJA53EA==", null, false, null, null, "b8a31059-f132-4f1f-9c5d-61a79fc6b9ec", false, null, "admin" });
+                values: new object[] { "1", 0, "c699b908-da4e-442e-b7b8-4c84f885a534", new DateTime(2025, 7, 17, 13, 55, 50, 791, DateTimeKind.Utc).AddTicks(6543), "admin@englishvocab.com", true, "System", true, "Administrator", false, null, "ADMIN@ENGLISHVOCAB.COM", "ADMIN", "AQAAAAIAAYagAAAAEO+JOsXwI7aEfJiMHtAGC0wuh1FqEuiPRRilzeNfBWE9wqTFmiZEkUfV0hz1uyoQQA==", null, false, null, null, "0cd4e3d3-cca7-4171-a3a4-44fc842fb146", false, null, "admin" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",

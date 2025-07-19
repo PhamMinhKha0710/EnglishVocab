@@ -22,36 +22,33 @@ namespace EnglishVocab.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DifficultyLevelDto>>> GetAll()
-        {
-            var query = new GetDifficultyLevelsQuery
-            {
-                UsePagination = false
-            };
-
-            var result = await _mediator.Send(query);
-            return Ok(result);
-        }
-
-        [HttpGet("paginated")]
-        public async Task<ActionResult<DataTableResponse<DifficultyLevelDto>>> GetPaginated(
+        public async Task<ActionResult<object>> GetAll(
+            [FromQuery] int? pageNumber = null,
+            [FromQuery] int? pageSize = null,
             [FromQuery] int start = 0,
-            [FromQuery] int length = 10,
+            [FromQuery] int length = 0,
             [FromQuery] string orderBy = "Value",
             [FromQuery] string order = "asc",
             [FromQuery] string search = null)
         {
-            var query = new GetDifficultyLevelsQuery
+            var request = new DataTableRequest
             {
-                UsePagination = true,
-                PaginationParams = new DataTableRequest
-                {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                     Start = start,
                     Length = length,
                     OrderBy = orderBy,
                     Order = order,
                     Search = search
-                }
+            };
+            
+            // Đảm bảo Start và Length được tính toán đúng từ PageNumber và PageSize
+            request.NormalizeRequest();
+
+            var query = new GetDifficultyLevelsQuery
+            {
+                UsePagination = request.IsPagingRequest(),
+                PaginationParams = request
             };
 
             var result = await _mediator.Send(query);

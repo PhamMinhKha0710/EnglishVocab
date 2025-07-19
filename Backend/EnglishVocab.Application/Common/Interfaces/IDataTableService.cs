@@ -25,6 +25,13 @@ namespace EnglishVocab.Application.Common.Interfaces
             IEnumerable<T> data,
             DataTableRequest request,
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Tạo PaginatedResponse từ IQueryable với phân trang và sắp xếp
+        /// </summary>
+        PaginatedResponse<T> CreatePaginatedResponse<T>(
+            IQueryable<T> query,
+            PaginationParameters parameters);
 
         /// <summary>
         /// Áp dụng phân trang cho IQueryable

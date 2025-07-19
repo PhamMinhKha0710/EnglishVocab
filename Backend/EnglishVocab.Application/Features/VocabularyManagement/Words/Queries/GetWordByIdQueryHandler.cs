@@ -11,25 +11,31 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.Queries
 {
     public class GetWordByIdQueryHandler : IRequestHandler<GetWordByIdQuery, WordDto>
     {
-        private readonly IApplicationDbContext _context;
+        private readonly IWordRepository _wordRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IDifficultyLevelRepository _difficultyLevelRepository;
 
-        public GetWordByIdQueryHandler(IApplicationDbContext context)
+        public GetWordByIdQueryHandler(
+            IWordRepository wordRepository, 
+            ICategoryRepository categoryRepository,
+            IDifficultyLevelRepository difficultyLevelRepository)
         {
-            _context = context;
+            _wordRepository = wordRepository;
+            _categoryRepository = categoryRepository;
+            _difficultyLevelRepository = difficultyLevelRepository;
         }
 
         public async Task<WordDto> Handle(GetWordByIdQuery request, CancellationToken cancellationToken)
         {
-            var word = await _context.Words
-                .Include(w => w.CategoryEntity)
-                .FirstOrDefaultAsync(w => w.Id == request.Id, cancellationToken);
+            var word = await _wordRepository.GetByIdAsync(request.Id, cancellationToken);
 
             if (word == null)
             {
                 throw new NotFoundException("Word", request.Id);
             }
 
-            return new WordDto
+            // Create the DTO
+            var wordDto = new WordDto
             {
                 Id = word.Id,
                 English = word.English,
@@ -39,10 +45,36 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.Queries
                 Notes = word.Notes,
                 ImageUrl = word.ImageUrl,
                 AudioUrl = word.AudioUrl,
-                DifficultyLevel = word.DifficultyLevel.ToString(),
                 CategoryId = word.CategoryId,
-                CategoryName = word.CategoryEntity != null ? word.CategoryEntity.Name : word.Category
+                DifficultyLevelId = word.DifficultyLevelId,
+                DateCreated = word.DateCreated,
+                DateModified = word.DateModified,
+                CreatedBy = word.CreatedBy,
+                ModifiedBy = word.ModifiedBy
             };
+
+            // If there's a category ID, get the category name
+            if (word.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(word.CategoryId.Value, cancellationToken);
+                if (category != null)
+                {
+                    wordDto.CategoryName = category.Name;
+                }
+            }
+            
+            // If there's a difficulty level ID, get the difficulty level name and value
+            if (word.DifficultyLevelId.HasValue)
+            {
+                var difficultyLevel = await _difficultyLevelRepository.GetByIdAsync(word.DifficultyLevelId.Value, cancellationToken);
+                if (difficultyLevel != null)
+                {
+                    wordDto.DifficultyLevelName = difficultyLevel.Name;
+                    wordDto.DifficultyValue = difficultyLevel.Value;
+                }
+            }
+
+            return wordDto;
         }
     }
 } 

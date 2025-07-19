@@ -23,37 +23,33 @@ namespace EnglishVocab.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
-        {
-            var query = new GetCategoriesQuery
-            {
-                UsePagination = false
-            };
-
-            var result = await _mediator.Send(query);
-            return Ok(result);
-        }
-
-        [HttpGet("paginated")]
-        [Authorize]
-        public async Task<ActionResult<DataTableResponse<CategoryDto>>> GetPaginatedCategories(
+        public async Task<ActionResult<object>> GetCategories(
+            [FromQuery] int? pageNumber = null,
+            [FromQuery] int? pageSize = null,
             [FromQuery] int start = 0,
-            [FromQuery] int length = 10,
+            [FromQuery] int length = 0,
             [FromQuery] string orderBy = "Name",
             [FromQuery] string order = "asc",
             [FromQuery] string search = null)
         {
-            var query = new GetCategoriesQuery
+            var request = new DataTableRequest
             {
-                UsePagination = true,
-                PaginationParams = new DataTableRequest
-                {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                     Start = start,
                     Length = length,
                     OrderBy = orderBy,
                     Order = order,
                     Search = search
-                }
+            };
+            
+            // Đảm bảo Start và Length được tính toán đúng từ PageNumber và PageSize
+            request.NormalizeRequest();
+
+            var query = new GetCategoriesQuery
+            {
+                UsePagination = request.IsPagingRequest(),
+                PaginationParams = request
             };
 
             var result = await _mediator.Send(query);

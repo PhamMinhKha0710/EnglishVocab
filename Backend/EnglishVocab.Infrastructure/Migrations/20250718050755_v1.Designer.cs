@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EnglishVocab.Infrastructure.Migrations
 {
     [DbContext(typeof(EnglishVocabDatabaseContext))]
-    [Migration("20250712220223_NewV1")]
-    partial class NewV1
+    [Migration("20250718050755_v1")]
+    partial class v1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,10 +28,75 @@ namespace EnglishVocab.Infrastructure.Migrations
             modelBuilder.Entity("EnglishVocab.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("IconUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedBy = "System",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 330, DateTimeKind.Local).AddTicks(1017),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1492),
+                            Description = "Common greetings and introductions",
+                            IconUrl = "/images/categories/greetings.png",
+                            ModifiedBy = "System",
+                            Name = "Greetings"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedBy = "System",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1807),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1810),
+                            Description = "Common expressions and phrases",
+                            IconUrl = "/images/categories/expressions.png",
+                            ModifiedBy = "System",
+                            Name = "Expressions"
+                        });
+                });
+
+            modelBuilder.Entity("EnglishVocab.Domain.Entities.DifficultyLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ColorCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -57,46 +122,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Categories", (string)null);
-                });
-
-            modelBuilder.Entity("EnglishVocab.Domain.Entities.DifficultyLevel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("ModifiedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<int>("Value")
                         .HasColumnType("int");
 
@@ -107,35 +132,50 @@ namespace EnglishVocab.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = 0,
+                            ColorCode = "#28a745",
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 267, DateTimeKind.Local).AddTicks(6907),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 268, DateTimeKind.Local).AddTicks(7737),
-                            Description = "Words that are commonly used in everyday conversations",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7542),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7547),
+                            Description = "Basic vocabulary for beginners",
                             ModifiedBy = "System",
                             Name = "Easy",
+                            Value = 0
+                        },
+                        new
+                        {
+                            Id = 1,
+                            ColorCode = "#ffc107",
+                            CreatedBy = "System",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7552),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7553),
+                            Description = "Intermediate vocabulary",
+                            ModifiedBy = "System",
+                            Name = "Medium",
                             Value = 1
                         },
                         new
                         {
                             Id = 2,
+                            ColorCode = "#dc3545",
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 268, DateTimeKind.Local).AddTicks(8052),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 268, DateTimeKind.Local).AddTicks(8055),
-                            Description = "Words that are used in general contexts but less frequently",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7556),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7557),
+                            Description = "Advanced vocabulary",
                             ModifiedBy = "System",
-                            Name = "Medium",
+                            Name = "Hard",
                             Value = 2
                         },
                         new
                         {
                             Id = 3,
+                            ColorCode = "#6f42c1",
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 268, DateTimeKind.Local).AddTicks(8058),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 268, DateTimeKind.Local).AddTicks(8059),
-                            Description = "Words that are specialized or rarely used in everyday language",
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7559),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7560),
+                            Description = "Expert level vocabulary",
                             ModifiedBy = "System",
-                            Name = "Hard",
+                            Name = "Very Hard",
                             Value = 3
                         });
                 });
@@ -267,52 +307,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                     b.HasIndex("WordSetId");
 
                     b.ToTable("StudySessions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CorrectAnswers = 7,
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 273, DateTimeKind.Local).AddTicks(9465),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 273, DateTimeKind.Local).AddTicks(9470),
-                            EndTime = new DateTime(2025, 7, 13, 4, 32, 23, 273, DateTimeKind.Local).AddTicks(7810),
-                            IncorrectAnswers = 3,
-                            ModifiedBy = "System",
-                            PointsEarned = 0,
-                            ShuffleWords = false,
-                            StartTime = new DateTime(2025, 7, 13, 4, 2, 23, 273, DateTimeKind.Local).AddTicks(7810),
-                            Status = "active",
-                            StudyMode = 0,
-                            UserId = "1",
-                            WordSetId = 1,
-                            WordsKnown = 0,
-                            WordsSkipped = 0,
-                            WordsStudied = 10,
-                            WordsUnknown = 0
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CorrectAnswers = 12,
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 273, DateTimeKind.Local).AddTicks(9490),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 273, DateTimeKind.Local).AddTicks(9611),
-                            EndTime = new DateTime(2025, 7, 12, 5, 47, 23, 273, DateTimeKind.Local).AddTicks(7810),
-                            IncorrectAnswers = 3,
-                            ModifiedBy = "System",
-                            PointsEarned = 0,
-                            ShuffleWords = false,
-                            StartTime = new DateTime(2025, 7, 12, 5, 2, 23, 273, DateTimeKind.Local).AddTicks(7810),
-                            Status = "active",
-                            StudyMode = 4,
-                            UserId = "1",
-                            WordSetId = 2,
-                            WordsKnown = 0,
-                            WordsSkipped = 0,
-                            WordsStudied = 15,
-                            WordsUnknown = 0
-                        });
                 });
 
             modelBuilder.Entity("EnglishVocab.Domain.Entities.UserAction", b =>
@@ -452,50 +446,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("UserProgresses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CorrectCount = 2,
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(7130),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(7134),
-                            EaseFactorInPercentage = 250,
-                            IncorrectCount = 1,
-                            IntervalInDays = 0,
-                            LastReviewed = new DateTime(2025, 7, 12, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(4994),
-                            LastReviewedAt = new DateTime(2025, 7, 12, 22, 2, 23, 277, DateTimeKind.Utc).AddTicks(6063),
-                            MasteryLevel = 1,
-                            ModifiedBy = "System",
-                            NextReviewDate = new DateTime(2025, 7, 14, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(4994),
-                            RepetitionCount = 0,
-                            ReviewCount = 0,
-                            TimesReviewed = 0,
-                            UserId = "1",
-                            WordId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CorrectCount = 0,
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(7141),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(7142),
-                            EaseFactorInPercentage = 250,
-                            IncorrectCount = 0,
-                            IntervalInDays = 0,
-                            LastReviewed = new DateTime(2025, 7, 12, 22, 2, 23, 277, DateTimeKind.Utc).AddTicks(7138),
-                            LastReviewedAt = new DateTime(2025, 7, 12, 22, 2, 23, 277, DateTimeKind.Utc).AddTicks(7139),
-                            MasteryLevel = -1,
-                            ModifiedBy = "System",
-                            NextReviewDate = new DateTime(2025, 7, 13, 5, 2, 23, 277, DateTimeKind.Local).AddTicks(4994),
-                            RepetitionCount = 0,
-                            ReviewCount = 0,
-                            TimesReviewed = 0,
-                            UserId = "1",
-                            WordId = 2
-                        });
                 });
 
             modelBuilder.Entity("EnglishVocab.Domain.Entities.UserStatistics", b =>
@@ -588,18 +538,12 @@ namespace EnglishVocab.Infrastructure.Migrations
             modelBuilder.Entity("EnglishVocab.Domain.Entities.Word", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AudioUrl")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Category")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
@@ -614,9 +558,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DifficultyLevel")
-                        .HasColumnType("int");
-
                     b.Property<int?>("DifficultyLevelId")
                         .HasColumnType("int");
 
@@ -629,14 +570,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ExampleTranslation")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Frequency")
-                        .HasColumnType("int");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -675,15 +608,13 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 1,
                             AudioUrl = "/audio/hello.mp3",
-                            Category = "Greetings",
+                            CategoryId = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9326),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9331),
-                            DifficultyLevel = 0,
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(508),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(521),
+                            DifficultyLevelId = 0,
                             English = "Hello",
                             Example = "Hello, how are you today?",
-                            ExampleTranslation = "Xin chào, hôm nay bạn khỏe không?",
-                            Frequency = 0,
                             ImageUrl = "/images/hello.jpg",
                             ModifiedBy = "System",
                             Notes = "Common greeting",
@@ -694,15 +625,13 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 2,
                             AudioUrl = "/audio/goodbye.mp3",
-                            Category = "Greetings",
+                            CategoryId = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9337),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9338),
-                            DifficultyLevel = 0,
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(529),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(530),
+                            DifficultyLevelId = 0,
                             English = "Goodbye",
                             Example = "Goodbye, see you tomorrow!",
-                            ExampleTranslation = "Tạm biệt, hẹn gặp lại ngày mai!",
-                            Frequency = 0,
                             ImageUrl = "/images/goodbye.jpg",
                             ModifiedBy = "System",
                             Notes = "Common farewell",
@@ -713,15 +642,13 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 3,
                             AudioUrl = "/audio/thankyou.mp3",
-                            Category = "Expressions",
+                            CategoryId = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9341),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 285, DateTimeKind.Local).AddTicks(9342),
-                            DifficultyLevel = 0,
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(533),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(534),
+                            DifficultyLevelId = 0,
                             English = "Thank you",
                             Example = "Thank you for your help.",
-                            ExampleTranslation = "Cảm ơn vì sự giúp đỡ của bạn.",
-                            Frequency = 0,
                             ImageUrl = "/images/thankyou.jpg",
                             ModifiedBy = "System",
                             Notes = "Common expression of gratitude",
@@ -797,8 +724,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             Category = "Beginner",
                             CreatedBy = "System",
                             CreatedByUserId = "1",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 286, DateTimeKind.Local).AddTicks(6341),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 286, DateTimeKind.Local).AddTicks(6346),
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7699),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7707),
                             Description = "Essential greetings and phrases for beginners",
                             ImageUrl = "/images/wordsets/greetings.jpg",
                             IsDefault = false,
@@ -813,8 +740,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             Category = "Intermediate",
                             CreatedBy = "System",
                             CreatedByUserId = "1",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 286, DateTimeKind.Local).AddTicks(6351),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 286, DateTimeKind.Local).AddTicks(6352),
+                            DateCreated = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7712),
+                            DateModified = new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7713),
                             Description = "Vocabulary related to food, restaurants, and dining",
                             ImageUrl = "/images/wordsets/food.jpg",
                             IsDefault = false,
@@ -865,41 +792,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                     b.HasIndex("WordSetId");
 
                     b.ToTable("WordSetWords");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AddedDate = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7275),
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7408),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7409),
-                            ModifiedBy = "System",
-                            WordId = 1,
-                            WordSetId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AddedDate = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7413),
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7414),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7415),
-                            ModifiedBy = "System",
-                            WordId = 2,
-                            WordSetId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AddedDate = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7416),
-                            CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7417),
-                            DateModified = new DateTime(2025, 7, 13, 5, 2, 23, 288, DateTimeKind.Local).AddTicks(7418),
-                            ModifiedBy = "System",
-                            WordId = 3,
-                            WordSetId = 1
-                        });
                 });
 
             modelBuilder.Entity("EnglishVocab.Domain.Entities.StudySession", b =>
@@ -935,45 +827,30 @@ namespace EnglishVocab.Infrastructure.Migrations
 
             modelBuilder.Entity("EnglishVocab.Domain.Entities.Word", b =>
                 {
-                    b.HasOne("EnglishVocab.Domain.Entities.Category", "CategoryEntity")
-                        .WithMany("Words")
+                    b.HasOne("EnglishVocab.Domain.Entities.Category", null)
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("EnglishVocab.Domain.Entities.DifficultyLevel", null)
-                        .WithMany("Words")
-                        .HasForeignKey("DifficultyLevelId");
-
-                    b.Navigation("CategoryEntity");
+                        .WithMany()
+                        .HasForeignKey("DifficultyLevelId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("EnglishVocab.Domain.Entities.WordSetWord", b =>
                 {
-                    b.HasOne("EnglishVocab.Domain.Entities.Word", "Word")
+                    b.HasOne("EnglishVocab.Domain.Entities.Word", null)
                         .WithMany()
                         .HasForeignKey("WordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EnglishVocab.Domain.Entities.WordSet", "WordSet")
+                    b.HasOne("EnglishVocab.Domain.Entities.WordSet", null)
                         .WithMany()
                         .HasForeignKey("WordSetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Word");
-
-                    b.Navigation("WordSet");
-                });
-
-            modelBuilder.Entity("EnglishVocab.Domain.Entities.Category", b =>
-                {
-                    b.Navigation("Words");
-                });
-
-            modelBuilder.Entity("EnglishVocab.Domain.Entities.DifficultyLevel", b =>
-                {
-                    b.Navigation("Words");
                 });
 #pragma warning restore 612, 618
         }

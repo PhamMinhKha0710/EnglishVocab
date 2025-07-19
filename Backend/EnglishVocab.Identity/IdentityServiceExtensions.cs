@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace EnglishVocab.Identity
 {
@@ -90,12 +91,12 @@ namespace EnglishVocab.Identity
                 options.SaveToken = true;
                 options.IncludeErrorDetails = true;
                 
-                // Sử dụng sự kiện để xử lý lỗi xác thực
+                // Sử dụng sự kiện để xử lý lỗi xác thực và cho phép token không có prefix Bearer
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        // Cho phép token từ query string cho SignalR (nếu có)
+                        // Nếu có token trong query string cho SignalR
                         var accessToken = context.Request.Query["access_token"];
                         var path = context.HttpContext.Request.Path;
                         
@@ -104,7 +105,27 @@ namespace EnglishVocab.Identity
                         {
                             context.Token = accessToken;
                         }
+                        // Xử lý token không có tiền tố "Bearer"
+                        else if (context.Request.Headers.ContainsKey("Authorization"))
+                        {
+                            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                            if (!string.IsNullOrEmpty(authHeader))
+                            {
+                                // Nếu token không bắt đầu bằng "Bearer ", coi nó là token trực tiếp
+                                if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    context.Token = authHeader;
+                                }
+                                // Nếu bắt đầu bằng "Bearer " thì middleware đã tự động xử lý
+                            }
+                        }
                         
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        // Log lỗi xác thực
+                        Console.WriteLine($"Authentication failed: {context.Exception.Message}");
                         return Task.CompletedTask;
                     }
                 };

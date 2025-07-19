@@ -16,13 +16,14 @@ namespace EnglishVocab.Application.Features.Words.Commands
 
         public async Task<bool> Handle(DeleteWordCommand request, CancellationToken cancellationToken)
         {
-            var word = await _wordRepository.GetByIdAsync(request.Id);
+            var word = await _wordRepository.GetByIdAsync(request.Id, cancellationToken);
             if (word == null)
             {
                 return false;
             }
             
-            return await _wordRepository.DeleteAsync(word.Id);
+            await _wordRepository.DeleteAsync(word.Id, cancellationToken);
+            return true;
         }
     }
 } 

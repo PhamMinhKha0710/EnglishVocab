@@ -1,6 +1,7 @@
 using EnglishVocab.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 
 namespace EnglishVocab.Infrastructure.Configurations
 {
@@ -8,31 +9,42 @@ namespace EnglishVocab.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.ToTable("Categories");
-
             builder.HasKey(c => c.Id);
-
+            
+            // Vô hiệu hóa tính năng tự tăng cho cột ID
+            builder.Property(c => c.Id)
+                .ValueGeneratedNever();
+            
             builder.Property(c => c.Name)
                 .IsRequired()
-                .HasMaxLength(50);
-
+                .HasMaxLength(100);
+                
             builder.Property(c => c.Description)
-                .HasMaxLength(200);
-
-            builder.Property(c => c.DateCreated)
-                .IsRequired();
-
-            builder.Property(c => c.DateModified);
-
-            // Create a unique index on the Name column
-            builder.HasIndex(c => c.Name)
-                .IsUnique();
-
-            // Define the relationship with Words
-            builder.HasMany(c => c.Words)
-                .WithOne()
-                .HasForeignKey("CategoryId")
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasMaxLength(500);
+            
+            // Seed data cho Categories - cần có cho WordConfiguration
+            builder.HasData(
+                new Category
+                {
+                    Id = 1,
+                    Name = "Greetings",
+                    Description = "Common greetings and introductions",
+                    DateCreated = DateTime.Now,
+                    CreatedBy = "System",
+                    ModifiedBy = "System",
+                    DateModified = DateTime.Now
+                },
+                new Category
+                {
+                    Id = 2,
+                    Name = "Expressions",
+                    Description = "Common expressions and phrases",
+                    DateCreated = DateTime.Now,
+                    CreatedBy = "System",
+                    ModifiedBy = "System",
+                    DateModified = DateTime.Now
+                }
+            );
         }
     }
 } 

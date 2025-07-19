@@ -12,13 +12,16 @@ namespace EnglishVocab.Application.Features.Categories.Commands
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
+        private readonly IWordRepository _wordRepository;
 
         public UpdateCategoryCommandHandler(
             ICategoryRepository categoryRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IWordRepository wordRepository)
         {
             _categoryRepository = categoryRepository;
             _mapper = mapper;
+            _wordRepository = wordRepository;
         }
 
         public async Task<CategoryDto> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
@@ -46,12 +49,15 @@ namespace EnglishVocab.Application.Features.Categories.Commands
 
             var updatedCategory = await _categoryRepository.UpdateAsync(category);
             
+            // Get word count
+            var words = await _wordRepository.GetByCategoryAsync(updatedCategory.Id, cancellationToken);
+            
             return new CategoryDto
             {
                 Id = updatedCategory.Id,
                 Name = updatedCategory.Name,
                 Description = updatedCategory.Description,
-                WordCount = updatedCategory.Words?.Count ?? 0
+                WordCount = words.Count
             };
         }
     }

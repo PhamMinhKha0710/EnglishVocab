@@ -70,6 +70,14 @@ export interface AppSettings {
 export type DifficultyLevel = "beginner" | "intermediate" | "advanced"
 export type StudyMode = "flashcard" | "quiz" | "typing"
 
+// Category interface
+export interface CategoryType {
+  id: number
+  name: string
+  description: string
+  wordCount: number
+}
+
 // Quiz interfaces
 export interface QuizResult {
   totalQuestions: number

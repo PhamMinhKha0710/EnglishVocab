@@ -24,9 +24,23 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.Queries
 
         public async Task<IEnumerable<WordDto>> Handle(GetWordsByCategoryIdAndDifficultyLevelQuery request, CancellationToken cancellationToken)
         {
-            var difficultyLevel = Enum.Parse<DifficultyLevelType>(request.DifficultyLevel);
+            // Converter a string para int (assumindo que o DifficultyLevel é um enum com valores inteiros)
+            int difficultyLevelId;
+            if (!int.TryParse(request.DifficultyLevel, out difficultyLevelId))
+            {
+                // Se não for possível converter, tente converter de enum para int
+                if (Enum.TryParse<DifficultyLevelType>(request.DifficultyLevel, out var difficultyLevelEnum))
+                {
+                    difficultyLevelId = (int)difficultyLevelEnum;
+                }
+                else
+                {
+                    // Se não for possível converter, retorne uma lista vazia
+                    return new List<WordDto>();
+                }
+            }
 
-            var words = await _wordRepository.GetByCategoryIdAndDifficultyLevelAsync(request.CategoryId, request.DifficultyLevel);
+            var words = await _wordRepository.GetByCategoryIdAndDifficultyLevelAsync(request.CategoryId, difficultyLevelId, cancellationToken);
 
             return _mapper.Map<IEnumerable<WordDto>>(words);
         }

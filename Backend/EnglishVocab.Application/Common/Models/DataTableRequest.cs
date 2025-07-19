@@ -13,6 +13,16 @@ namespace EnglishVocab.Application.Common.Models
         /// Số lượng bản ghi cần lấy
         /// </summary>
         public int Length { get; set; } = 10;
+        
+        /// <summary>
+        /// Số trang cần lấy (ưu tiên sử dụng PageNumber và PageSize nếu được cung cấp)
+        /// </summary>
+        public int? PageNumber { get; set; } = 1;
+        
+        /// <summary>
+        /// Kích thước trang (ưu tiên sử dụng PageNumber và PageSize nếu được cung cấp)
+        /// </summary>
+        public int? PageSize { get; set; } = 10;
 
         /// <summary>
         /// Thứ tự sắp xếp (asc/desc)
@@ -35,19 +45,41 @@ namespace EnglishVocab.Application.Common.Models
         public Dictionary<string, string> Filters { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
-        /// Tính toán số trang dựa trên Start và Length
+        /// Tính toán số trang dựa trên Start và Length hoặc sử dụng PageNumber nếu được cung cấp
         /// </summary>
         public int GetPageNumber()
         {
+            if (PageNumber.HasValue && PageNumber.Value > 0)
+            {
+                return PageNumber.Value;
+            }
+            
             return Start / Length + 1;
         }
 
         /// <summary>
-        /// Lấy kích thước trang
+        /// Lấy kích thước trang từ Length hoặc PageSize nếu được cung cấp
         /// </summary>
         public int GetPageSize()
         {
+            if (PageSize.HasValue && PageSize.Value > 0)
+            {
+                return PageSize.Value;
+            }
+            
             return Length;
+        }
+        
+        /// <summary>
+        /// Đảm bảo Start và Length được tính toán đúng từ PageNumber và PageSize
+        /// </summary>
+        public void NormalizeRequest()
+        {
+            if (PageNumber.HasValue && PageSize.HasValue && PageNumber.Value > 0 && PageSize.Value > 0)
+            {
+                Start = (PageNumber.Value - 1) * PageSize.Value;
+                Length = PageSize.Value;
+            }
         }
         
         /// <summary>
@@ -59,6 +91,8 @@ namespace EnglishVocab.Application.Common.Models
             {
                 Start = (pageNumber - 1) * pageSize,
                 Length = pageSize,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 OrderBy = sortBy,
                 Order = ascending ? "asc" : "desc"
             };
@@ -69,6 +103,8 @@ namespace EnglishVocab.Application.Common.Models
         /// </summary>
         public void ConvertFromPagination(int pageNumber, int pageSize, string sortBy = null, bool? ascending = null)
         {
+            PageNumber = pageNumber;
+            PageSize = pageSize;
             Start = (pageNumber - 1) * pageSize;
             Length = pageSize;
             
@@ -77,6 +113,15 @@ namespace EnglishVocab.Application.Common.Models
                 
             if (ascending.HasValue)
                 Order = ascending.Value ? "asc" : "desc";
+        }
+        
+        /// <summary>
+        /// Kiểm tra xem yêu cầu này có phải là yêu cầu phân trang hay không
+        /// </summary>
+        /// <returns>True nếu Length > 0, ngược lại là False</returns>
+        public bool IsPagingRequest()
+        {
+            return Length > 0;
         }
     }
 } 

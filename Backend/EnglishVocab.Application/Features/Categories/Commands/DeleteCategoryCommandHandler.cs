@@ -8,30 +8,36 @@ namespace EnglishVocab.Application.Features.Categories.Commands
     public class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategoryCommand, bool>
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IWordRepository _wordRepository;
 
-        public DeleteCategoryCommandHandler(ICategoryRepository categoryRepository)
+        public DeleteCategoryCommandHandler(
+            ICategoryRepository categoryRepository,
+            IWordRepository wordRepository)
         {
             _categoryRepository = categoryRepository;
+            _wordRepository = wordRepository;
         }
 
         public async Task<bool> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
         {
             // Check if the category exists
-            var category = await _categoryRepository.GetByIdAsync(request.Id);
+            var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
             if (category == null)
             {
                 return false;
             }
 
             // Check if the category has any words
-            if (category.Words?.Count > 0)
+            var wordsInCategory = await _wordRepository.GetByCategoryAsync(request.Id, cancellationToken);
+            if (wordsInCategory.Count > 0)
             {
                 // Don't allow deletion if the category has words
                 throw new System.Exception("Cannot delete a category that has words. Reassign words to another category first.");
             }
 
             // Delete the category
-            return await _categoryRepository.DeleteAsync(request.Id);
+            await _categoryRepository.DeleteAsync(request.Id, cancellationToken);
+            return true;
         }
     }
 } 

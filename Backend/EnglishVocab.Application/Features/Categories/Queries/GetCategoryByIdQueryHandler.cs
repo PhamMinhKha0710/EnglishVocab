@@ -11,11 +11,16 @@ namespace EnglishVocab.Application.Features.Categories.Queries
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
+        private readonly IWordRepository _wordRepository;
 
-        public GetCategoryByIdQueryHandler(ICategoryRepository categoryRepository, IMapper mapper)
+        public GetCategoryByIdQueryHandler(
+            ICategoryRepository categoryRepository, 
+            IMapper mapper,
+            IWordRepository wordRepository)
         {
             _categoryRepository = categoryRepository;
             _mapper = mapper;
+            _wordRepository = wordRepository;
         }
 
         public async Task<CategoryDto> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
@@ -24,13 +29,14 @@ namespace EnglishVocab.Application.Features.Categories.Queries
             if (category == null)
                 return null;
 
-            return new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                WordCount = category.Words?.Count ?? 0
-            };
+            // Map the category to DTO
+            var categoryDto = _mapper.Map<CategoryDto>(category);
+            
+            // Get word count separately
+            var words = await _wordRepository.GetByCategoryAsync(request.Id, cancellationToken);
+            categoryDto.WordCount = words.Count;
+            
+            return categoryDto;
         }
     }
 } 

@@ -12,15 +12,21 @@ namespace EnglishVocab.Application.Features.StudyManagement.Sessions.Queries.Get
     {
         private readonly IStudySessionRepository _studySessionRepository;
         private readonly IWordRepository _wordRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IDifficultyLevelRepository _difficultyLevelRepository;
         private readonly IMapper _mapper;
 
         public GetNextFlashcardQueryHandler(
             IStudySessionRepository studySessionRepository,
             IWordRepository wordRepository,
+            ICategoryRepository categoryRepository,
+            IDifficultyLevelRepository difficultyLevelRepository,
             IMapper mapper)
         {
             _studySessionRepository = studySessionRepository;
             _wordRepository = wordRepository;
+            _categoryRepository = categoryRepository;
+            _difficultyLevelRepository = difficultyLevelRepository;
             _mapper = mapper;
         }
 
@@ -40,16 +46,38 @@ namespace EnglishVocab.Application.Features.StudyManagement.Sessions.Queries.Get
                 return null;
             }
             
-            return new FlashcardDto
+            var flashcardDto = new FlashcardDto
             {
                 WordId = nextWord.Id,
                 Text = nextWord.English,
                 Translation = nextWord.Vietnamese,
                 Pronunciation = nextWord.Pronunciation,
                 Examples = !string.IsNullOrEmpty(nextWord.Example) ? new List<string> { nextWord.Example } : new List<string>(),
-                Category = nextWord.Category,
-                DifficultyLevel = nextWord.DifficultyLevel.ToString()
+                Category = string.Empty,
+                DifficultyLevel = string.Empty
             };
+            
+            // Get category name if CategoryId is not null
+            if (nextWord.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(nextWord.CategoryId.Value, cancellationToken);
+                if (category != null)
+                {
+                    flashcardDto.Category = category.Name;
+                }
+            }
+            
+            // Get difficulty level name if DifficultyLevelId is not null
+            if (nextWord.DifficultyLevelId.HasValue)
+            {
+                var difficultyLevel = await _difficultyLevelRepository.GetByIdAsync(nextWord.DifficultyLevelId.Value, cancellationToken);
+                if (difficultyLevel != null)
+                {
+                    flashcardDto.DifficultyLevel = difficultyLevel.Name;
+                }
+            }
+            
+            return flashcardDto;
         }
     }
 } 

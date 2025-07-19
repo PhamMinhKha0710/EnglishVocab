@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using EnglishVocab.API.Middleware;
 using Microsoft.AspNetCore.Builder;
+using System.Text.Json.Serialization;
 
 namespace EnglishVocab.API.Extensions
 {
@@ -32,6 +33,8 @@ namespace EnglishVocab.API.Extensions
                 // Tối ưu hiệu suất JSON serialization
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
                 options.JsonSerializerOptions.WriteIndented = false;
+                // Xử lý tham chiếu vòng tròn
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             });
 
             // Đăng ký API Explorer
@@ -42,14 +45,14 @@ namespace EnglishVocab.API.Extensions
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EnglishVocab API", Version = "v1" });
                 
-                // Cấu hình xác thực JWT cho Swagger không yêu cầu prefix "Bearer"
+                // Cấu hình xác thực JWT cho Swagger - chấp nhận token trực tiếp
                 c.AddSecurityDefinition("JWT", new OpenApiSecurityScheme
                 {
-                    Description = "Nhập token JWT trực tiếp không cần thêm Bearer",
+                    Description = "Nhập token JWT trực tiếp không cần thêm Bearer. Hệ thống sẽ tự nhận diện token.",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
-                    Scheme = "bearer", // Mặc định là bearer nhưng sẽ được xử lý ở phía server
+                    Scheme = "bearer", // Vẫn giữ scheme bearer cho swagger UI
                     BearerFormat = "JWT"
                 });
                 

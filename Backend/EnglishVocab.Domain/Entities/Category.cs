@@ -8,10 +8,7 @@ namespace EnglishVocab.Domain.Entities
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public DateTime DateCreated { get; set; }
-        public DateTime? DateModified { get; set; }
         
-        // Navigation property
-        public virtual ICollection<Word> Words { get; set; } = new List<Word>();
+        // No navigation properties in domain entities per Clean Architecture
     }
 } 

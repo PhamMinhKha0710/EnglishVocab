@@ -13,23 +13,51 @@ namespace EnglishVocab.Application.Features.StudyManagement.Progress.Queries.Get
     {
         private readonly IUserProgressRepository _userProgressRepository;
         private readonly IWordRepository _wordRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IDifficultyLevelRepository _difficultyLevelRepository;
         private readonly IMapper _mapper;
 
         public GetProgressByWordQueryHandler(
             IUserProgressRepository userProgressRepository,
             IWordRepository wordRepository,
+            ICategoryRepository categoryRepository,
+            IDifficultyLevelRepository difficultyLevelRepository,
             IMapper mapper)
         {
             _userProgressRepository = userProgressRepository;
             _wordRepository = wordRepository;
+            _categoryRepository = categoryRepository;
+            _difficultyLevelRepository = difficultyLevelRepository;
             _mapper = mapper;
         }
 
         public async Task<WordProgressDto> Handle(GetProgressByWordQuery request, CancellationToken cancellationToken)
         {
-            var word = await _wordRepository.GetByIdAsync(request.WordId);
+            var word = await _wordRepository.GetByIdAsync(request.WordId, cancellationToken);
             if (word == null)
                 return null;
+
+            // Get category and difficulty level info
+            string categoryName = string.Empty;
+            string difficultyLevelName = string.Empty;
+            
+            if (word.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(word.CategoryId.Value, cancellationToken);
+                if (category != null)
+                {
+                    categoryName = category.Name;
+                }
+            }
+            
+            if (word.DifficultyLevelId.HasValue)
+            {
+                var difficultyLevel = await _difficultyLevelRepository.GetByIdAsync(word.DifficultyLevelId.Value, cancellationToken);
+                if (difficultyLevel != null)
+                {
+                    difficultyLevelName = difficultyLevel.Name;
+                }
+            }
 
             var progress = await _userProgressRepository.GetByUserIdAndWordIdAsync(request.UserId, request.WordId);
             if (progress == null)
@@ -38,8 +66,8 @@ namespace EnglishVocab.Application.Features.StudyManagement.Progress.Queries.Get
                     WordId = word.Id,
                     Word = word.English,
                     Translation = word.Vietnamese,
-                    Category = word.Category,
-                    DifficultyLevel = word.DifficultyLevel.ToString(),
+                    Category = categoryName,
+                    DifficultyLevel = difficultyLevelName,
                     MasteryLevel = "0",
                     LastReviewed = DateTime.MinValue,
                     NextReviewDue = DateTime.MinValue,
@@ -53,8 +81,8 @@ namespace EnglishVocab.Application.Features.StudyManagement.Progress.Queries.Get
                 WordId = word.Id,
                 Word = word.English,
                 Translation = word.Vietnamese,
-                Category = word.Category,
-                DifficultyLevel = word.DifficultyLevel.ToString(),
+                Category = categoryName,
+                DifficultyLevel = difficultyLevelName,
                 MasteryLevel = progress.MasteryLevel.ToString(),
                 LastReviewed = progress.LastReviewed,
                 NextReviewDue = progress.NextReviewDate,

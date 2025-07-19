@@ -1,28 +1,36 @@
-using EnglishVocab.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using EnglishVocab.Domain.Entities;
 
 namespace EnglishVocab.Application.Common.Interfaces
 {
     public interface IWordRepository
     {
-        Task<Word> GetByIdAsync(int id);
-        Task<IEnumerable<Word>> GetAllAsync();
-        Task<IEnumerable<Word>> GetByIdsAsync(IEnumerable<int> ids);
-        Task<IEnumerable<Word>> GetByCategoryAsync(string category);
-        Task<IEnumerable<Word>> GetByDifficultyLevelAsync(string difficultyLevel);
-        Task<IEnumerable<Word>> GetByCategoryIdAsync(int categoryId);
-        Task<IEnumerable<Word>> GetByCategoryIdAndDifficultyLevelAsync(int categoryId, string difficultyLevel);
-        Task<IEnumerable<Word>> SearchAsync(string searchTerm);
-        Task<IEnumerable<Word>> SearchAsync(string searchTerm, string category, string difficultyLevel, int pageNumber, int pageSize);
-        Task<IEnumerable<Word>> GetPaginatedAsync(int pageNumber, int pageSize, string sortBy, bool ascending);
-        Task<int> CountAsync();
-        Task<Word> AddAsync(Word word);
-        Task<Word> UpdateAsync(Word word);
-        Task<bool> DeleteAsync(int id);
-        Task<IEnumerable<string>> GetAllCategoriesAsync();
-        Task<Dictionary<string, int>> GetCategoriesWithCountsAsync();
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        Task<List<Word>> GetAllAsync(
+            string searchTerm = null, 
+            int? categoryId = null,
+            int? difficultyLevelId = null,
+            CancellationToken cancellationToken = default);
+            
+        Task<List<Word>> GetByCategoryAsync(int categoryId, CancellationToken cancellationToken = default);
+        Task<List<Word>> GetByDifficultyLevelAsync(int difficultyLevelId, CancellationToken cancellationToken = default);
+        Task<List<Word>> GetByCategoryIdAndDifficultyLevelAsync(int categoryId, int difficultyLevelId, CancellationToken cancellationToken = default);
+        Task<List<Word>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default);
+        
+        Task<Word> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<(Word Word, Category Category, DifficultyLevel DifficultyLevel)> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default);
+        Task<List<(Word Word, Category Category, DifficultyLevel DifficultyLevel)>> GetAllWithDetailsAsync(
+            string searchTerm = null, 
+            int? categoryId = null,
+            int? difficultyLevelId = null,
+            CancellationToken cancellationToken = default);
+        
+        Task<Word> AddAsync(Word word, CancellationToken cancellationToken = default);
+        Task<Word> UpdateAsync(Word word, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(CancellationToken cancellationToken = default);
     }
 } 

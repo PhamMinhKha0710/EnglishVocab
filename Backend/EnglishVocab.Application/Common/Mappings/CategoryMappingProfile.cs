@@ -8,9 +8,8 @@ namespace EnglishVocab.Application.Common.Mappings
     {
         public CategoryMappingProfile()
         {
-            // Category mappings
-            CreateMap<Category, CategoryDto>()
-                .ForMember(dest => dest.WordCount, opt => opt.MapFrom(src => src.Words != null ? src.Words.Count : 0));
+            // Category mappings - don't rely on navigation properties
+            CreateMap<Category, CategoryDto>();
         }
     }
 } 

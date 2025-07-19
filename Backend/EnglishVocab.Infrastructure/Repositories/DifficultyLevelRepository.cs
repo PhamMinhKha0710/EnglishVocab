@@ -1,99 +1,83 @@
-using EnglishVocab.Application.Common.Interfaces;
-using EnglishVocab.Application.Common.Models;
-using EnglishVocab.Application.Features.DifficultyLevels.DTOs;
-using EnglishVocab.Domain.Entities;
-using EnglishVocab.Infrastructure.DatabaseContext;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EnglishVocab.Application.Common.Interfaces;
+using EnglishVocab.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace EnglishVocab.Infrastructure.Repositories
 {
     public class DifficultyLevelRepository : IDifficultyLevelRepository
     {
-        private readonly EnglishVocabDatabaseContext _context;
+        private readonly IApplicationDbContext _dbContext;
 
-        public DifficultyLevelRepository(EnglishVocabDatabaseContext context)
+        public DifficultyLevelRepository(IApplicationDbContext dbContext)
         {
-            _context = context;
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<IEnumerable<DifficultyLevelDto>> GetAllDifficultyLevelsAsync(CancellationToken cancellationToken = default)
+        public async Task<List<DifficultyLevel>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var difficultyLevels = await _context.DifficultyLevels
-                .Select(d => new DifficultyLevelDto
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Description = d.Description,
-                    Value = d.Value
-                })
-                .ToListAsync(cancellationToken);
-
-            return difficultyLevels;
+            return await _dbContext.DifficultyLevels.ToListAsync(cancellationToken);
         }
 
-        public async Task<DataTableResponse<DifficultyLevelDto>> GetPaginatedDifficultyLevelsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<IQueryable<DifficultyLevel>> GetAllDifficultyLevelsAsync(string searchTerm = null)
         {
-            var query = _context.DifficultyLevels
-                .Select(d => new DifficultyLevelDto
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Description = d.Description,
-                    Value = d.Value
-                });
-
-            var totalCount = await query.CountAsync(cancellationToken);
-            var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(cancellationToken);
-
-            return new DataTableResponse<DifficultyLevelDto>
+            IQueryable<DifficultyLevel> query = _dbContext.DifficultyLevels;
+            
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                Data = items,
-                RecordsTotal = totalCount,
-                RecordsFiltered = totalCount
-            };
+                query = query.Where(d => 
+                    d.Name.Contains(searchTerm) || 
+                    (d.Description != null && d.Description.Contains(searchTerm))
+                );
+            }
+            
+            return query;
         }
 
         public async Task<DifficultyLevel> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            return await _context.DifficultyLevels.FindAsync(new object[] { id }, cancellationToken);
+            return await _dbContext.DifficultyLevels.FindAsync(new object[] { id }, cancellationToken);
+        }
+        
+        public async Task<DifficultyLevel> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.DifficultyLevels
+                .FirstOrDefaultAsync(d => d.Name.ToLower() == name.ToLower(), cancellationToken);
         }
 
         public async Task<DifficultyLevel> AddAsync(DifficultyLevel difficultyLevel, CancellationToken cancellationToken = default)
         {
-            await _context.DifficultyLevels.AddAsync(difficultyLevel, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _dbContext.DifficultyLevels.AddAsync(difficultyLevel, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return difficultyLevel;
         }
 
         public async Task<DifficultyLevel> UpdateAsync(DifficultyLevel difficultyLevel, CancellationToken cancellationToken = default)
         {
-            _context.DifficultyLevels.Update(difficultyLevel);
-            await _context.SaveChangesAsync(cancellationToken);
+            _dbContext.DifficultyLevels.Update(difficultyLevel);
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return difficultyLevel;
         }
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var difficultyLevel = await _context.DifficultyLevels.FindAsync(new object[] { id }, cancellationToken);
-            if (difficultyLevel == null)
+            var difficultyLevel = await _dbContext.DifficultyLevels.FindAsync(new object[] { id }, cancellationToken);
+            if (difficultyLevel != null)
+            {
+                _dbContext.DifficultyLevels.Remove(difficultyLevel);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return true;
+            }
                 return false;
-
-            _context.DifficultyLevels.Remove(difficultyLevel);
-            await _context.SaveChangesAsync(cancellationToken);
-            return true;
         }
 
-        public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task<int> CountAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync(cancellationToken) > 0;
+            return await _dbContext.DifficultyLevels.CountAsync(cancellationToken);
         }
     }
 } 

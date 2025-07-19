@@ -28,9 +28,12 @@ import {
   ListChecks,
   Info,
   ExternalLink,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react"
 import { vocabularyData } from "@/lib/vocabulary-data"
+import { apiService, Category } from "@/services/api-service"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function StudyPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -45,10 +48,53 @@ export default function StudyPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [isFlipping, setIsFlipping] = useState(false)
   const [studyMode, setStudyMode] = useState<'flashcard' | 'quiz' | 'typing'>('flashcard')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(false)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+  const { user } = useAuth()
+
+  // Lấy danh mục từ API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true)
+      setCategoryError(null)
+      try {
+        const token = user?.accessToken
+        const categoriesData = await apiService.getCategories(token)
+        console.log("Đã tải danh mục từ API:", categoriesData)
+        
+        // Log chi tiết hơn để xem cấu trúc dữ liệu
+        if (categoriesData && categoriesData.length > 0) {
+          console.log("Chi tiết category:", JSON.stringify(categoriesData, null, 2))
+          console.log("Thuộc tính của category:", Object.keys(categoriesData[0]))
+        }
+        
+        setCategories(categoriesData)
+      } catch (error: any) {
+        console.error("Lỗi khi tải danh mục:", error.message)
+        setCategoryError(error.message)
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [user])
+
+  // Chuyển đổi category sang đúng định dạng cho so sánh
+  const getCategoryValue = (categoryName: string) => {
+    return categoryName.trim().toLowerCase();
+  }
+
+  // Hàm kiểm tra xem một từ vựng có thuộc danh mục được chọn không
+  const matchesSelectedCategory = (wordCategory: string) => {
+    if (selectedCategory === "all") return true;
+    return getCategoryValue(wordCategory) === selectedCategory;
+  };
 
   const filteredVocabulary = vocabularyData.filter((word) => {
     const difficultyMatch = selectedDifficulty === "all" || word.difficulty === selectedDifficulty
-    const categoryMatch = selectedCategory === "all" || word.category === selectedCategory
+    const categoryMatch = selectedCategory === "all" || matchesSelectedCategory(word.category)
     return difficultyMatch && categoryMatch
   })
 
@@ -187,99 +233,6 @@ export default function StudyPage() {
     )
   }
 
-  if (currentCardIndex >= filteredVocabulary.length) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-        <main className="p-6">
-          <div className="max-w-md mx-auto pt-8">
-            <div className="text-center space-y-6">
-              <div className="text-6xl">🎉</div>
-              <h1 className="text-2xl font-bold text-gray-800">Hoàn thành session!</h1>
-              
-              <Card className="border-2 border-purple-200">
-                <CardHeader className="bg-purple-50 pb-2">
-                  <CardTitle className="flex items-center justify-center text-purple-800">
-                    <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
-                    Kết quả học tập
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-2" />
-                      Thời gian:
-                    </span>
-                    <span className="font-semibold">{formatTime(sessionTime)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center text-gray-600">
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                      Đã biết:
-                    </span>
-                    <span className="font-semibold text-green-600">{knownCards.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center text-gray-600">
-                      <Bookmark className="w-4 h-4 mr-2 text-orange-500" />
-                      Cần ôn:
-                    </span>
-                    <span className="font-semibold text-orange-600">{unknownCards.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center text-gray-600">
-                      <Trophy className="w-4 h-4 mr-2 text-yellow-500" />
-                      Điểm kiếm được:
-                    </span>
-                    <span className="font-semibold text-purple-600">+{knownCards.length * 10}</span>
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Tiến độ học tập:</div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-grow">
-                        <Progress value={(knownCards.length / filteredVocabulary.length) * 100} 
-                                 className="h-2 bg-gray-200" 
-                                 indicatorClassName="bg-green-500" />
-                      </div>
-                      <div className="text-sm font-medium text-green-600">
-                        {Math.round((knownCards.length / filteredVocabulary.length) * 100)}%
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border border-blue-100">
-                <CardHeader className="bg-blue-50 pb-2">
-                  <CardTitle className="flex items-center justify-center text-blue-800 text-sm">
-                    <Lightbulb className="w-4 h-4 mr-1 text-yellow-500" />
-                    Mẹo học tập
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 text-sm">
-                  <p className="text-gray-600">Để học hiệu quả hơn, hãy thực hành các từ "Cần ôn" mỗi ngày và tạo câu ví dụ với các từ mới học.</p>
-                </CardContent>
-              </Card>
-              
-              <div className="space-y-3">
-                <Button onClick={startSession} className="w-full bg-purple-600 hover:bg-purple-700">
-                  <Play className="w-4 h-4 mr-2" />
-                  Bắt đầu session mới
-                </Button>
-                <Link to="/" className="block">
-                  <Button variant="outline" className="w-full">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Quay về trang chủ
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pb-6">
       <main className="container px-4 py-6 max-w-4xl mx-auto">
@@ -388,6 +341,22 @@ export default function StudyPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-2 block">Danh mục</label>
                       <div className="flex gap-2 flex-wrap">
+                        {/* Trạng thái đang tải */}
+                        {loadingCategories && (
+                          <div className="flex items-center justify-center w-full py-2 text-blue-600">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Đang tải danh mục...
+                          </div>
+                        )}
+                        
+                        {/* Hiển thị lỗi nếu có */}
+                        {categoryError && (
+                          <div className="text-red-500 text-sm w-full py-2">
+                            Lỗi: {categoryError}. Đang sử dụng danh mục mặc định.
+                          </div>
+                        )}
+                        
+                        {/* Nút "Tất cả" luôn được hiển thị */}
                         <Button
                           variant={selectedCategory === "all" ? "default" : "outline"}
                           size="sm"
@@ -396,6 +365,38 @@ export default function StudyPage() {
                         >
                           Tất cả
                         </Button>
+                        
+                        {/* Danh mục từ API */}
+                        {categories && categories.length > 0 ? (
+                          categories.map((category) => {
+                            // Xác định dữ liệu từ category, kiểm tra các trường hợp khác nhau của API
+                            const categoryId = category.id || '';
+                            // Kiểm tra các trường hợp khác nhau của cấu trúc dữ liệu
+                            const categoryName = 
+                              typeof category.name === 'string' ? category.name : 
+                              typeof category.Name === 'string' ? category.Name :
+                              category.description || 
+                              String(categoryId) || 
+                              'Danh mục không tên';
+                            
+                            // Chuyển đổi an toàn sang lowercase cho việc so sánh
+                            const categoryValue = getCategoryValue(categoryName);
+                            
+                            return (
+                              <Button
+                                key={categoryId}
+                                variant={selectedCategory === categoryValue ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedCategory(categoryValue)}
+                                className={selectedCategory === categoryValue ? "bg-blue-600 hover:bg-blue-700" : ""}
+                              >
+                                {categoryName}
+                              </Button>
+                            );
+                          })
+                        ) : !loadingCategories && !categoryError ? (
+                          // Danh mục mặc định nếu API không trả về dữ liệu
+                          <>
                         <Button
                           variant={selectedCategory === "business" ? "default" : "outline"}
                           size="sm"
@@ -412,6 +413,8 @@ export default function StudyPage() {
                         >
                           Công nghệ
                         </Button>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                     
@@ -425,37 +428,40 @@ export default function StudyPage() {
                 </Card>
               )}
 
-              {/* Session Stats */}
+              {/* Stats Card */}
               {isSessionActive && (
-                <Card className="border-2 border-green-100">
+                <Card className="border-2 border-purple-100">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-bold text-green-900 flex items-center">
-                      <BarChart className="w-5 h-5 text-green-700 mr-2" />
-                      Thông tin session
+                    <CardTitle className="text-lg font-bold text-purple-900 flex items-center">
+                      <BarChart className="w-5 h-5 text-purple-700 mr-2" />
+                      Session hiện tại
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3 pt-2">
+                  <CardContent className="pt-2 space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 flex items-center">
-                        <Clock className="w-4 h-4 mr-1 text-gray-500" />
+                        <Clock className="w-4 h-4 mr-1 text-purple-500" />
                         Thời gian:
                       </span>
-                      <span className="font-semibold">{formatTime(sessionTime)}</span>
+                      <span className="font-semibold text-purple-600">{formatTime(sessionTime)}</span>
                     </div>
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 flex items-center">
                         <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
-                        Đã biết:
+                        Đã thuộc:
                       </span>
                       <span className="font-semibold text-green-600">{knownCards.length}</span>
                     </div>
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 flex items-center">
-                        <XCircle className="w-4 h-4 mr-1 text-orange-500" />
-                        Cần ôn:
+                        <XCircle className="w-4 h-4 mr-1 text-red-500" />
+                        Cần ôn lại:
                       </span>
-                      <span className="font-semibold text-orange-600">{unknownCards.length}</span>
+                      <span className="font-semibold text-red-600">{unknownCards.length}</span>
                     </div>
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 flex items-center">
                         <Trophy className="w-4 h-4 mr-1 text-purple-500" />
@@ -489,80 +495,102 @@ export default function StudyPage() {
           </div>
           
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Welcome Card */}
-            {!isSessionActive && currentCardIndex === 0 ? (
-              <Card className="text-center border-2 border-purple-200">
-                <CardHeader className="pb-2 bg-purple-50">
-                  <CardTitle className="text-2xl font-bold text-purple-800">Sẵn sàng học?</CardTitle>
+          <div className="lg:col-span-2">
+            {!isSessionActive ? (
+              <div className="flex flex-col gap-6">
+                <Card className="border-2 border-purple-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl font-bold text-center text-purple-900">
+                      Sẵn sàng học?
+                    </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <Lightbulb className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-6">Bắt đầu session học từ vựng với {filteredVocabulary.length} từ</p>
+                  <CardContent className="pt-4 text-center space-y-6">
+                    <div className="mb-8 text-8xl flex justify-center">
+                      <Lightbulb className="w-24 h-24 text-yellow-400" />
+                    </div>
+                    
+                    <p className="text-gray-600 mb-4">
+                      Bắt đầu session học từ vựng với {filteredVocabulary.length} từ
+                    </p>
                     
                     <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <div className="text-purple-800 font-bold text-lg">{filteredVocabulary.length}</div>
-                        <div className="text-xs text-gray-600">Từ vựng</div>
+                      <div className="bg-purple-50 p-4 rounded-lg text-center">
+                        <div className="text-xl font-bold text-purple-600">{filteredVocabulary.length}</div>
+                        <div className="text-sm text-purple-500">Từ vựng</div>
                       </div>
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="text-blue-800 font-bold text-lg">5</div>
-                        <div className="text-xs text-gray-600">Phút</div>
+                      <div className="bg-blue-50 p-4 rounded-lg text-center">
+                        <div className="text-xl font-bold text-blue-600">5</div>
+                        <div className="text-sm text-blue-500">Phút</div>
                       </div>
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <div className="text-green-800 font-bold text-lg">+{filteredVocabulary.length * 10}</div>
-                        <div className="text-xs text-gray-600">Điểm tối đa</div>
-                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg text-center">
+                        <div className="text-xl font-bold text-green-600">+80</div>
+                        <div className="text-sm text-green-500">Điểm tối đa</div>
                     </div>
                   </div>
                   
-                  <Button onClick={startSession} size="lg" className="bg-purple-600 hover:bg-purple-700 w-full">
-                    <Play className="w-5 h-5 mr-2" />
+                    <Button onClick={startSession} className="w-full bg-purple-600 hover:bg-purple-700">
+                      <Play className="w-4 h-4 mr-2" />
                     Bắt đầu học ngay
                   </Button>
                 </CardContent>
               </Card>
+
+                <div className="space-y-3">
+                  <Button onClick={startSession} className="w-full bg-purple-600 hover:bg-purple-700">
+                    <Play className="w-4 h-4 mr-2" />
+                    Bắt đầu session mới
+                  </Button>
+                  <Link to="/" className="block">
+                    <Button variant="outline" className="w-full">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Quay về trang chủ
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             ) : (
               <>
-                {/* Session Controls */}
-                {isSessionActive && (
-                  <Card className="border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-grow mr-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span className="flex items-center">
-                              <BarChart className="w-3 h-3 mr-1" />
-                              Tiến độ học tập
-                            </span>
-                            <span className="font-medium">
-                              {currentCardIndex + 1} / {filteredVocabulary.length}
-                            </span>
+                {/* Study session progress */}
+                <div className="mb-6">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center">
+                      <Badge variant="outline" className={getDifficultyColor(currentCard.difficulty)}>
+                        {getDifficultyLabel(currentCard.difficulty)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center">
+                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                        {currentCard.category}
+                      </Badge>
+                    </div>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                  <div className="flex justify-between mt-1 text-sm text-gray-500">
+                    <span>{currentCardIndex + 1} / {filteredVocabulary.length}</span>
+                    <span>{Math.round(progress)}%</span>
                           </div>
-                          <Progress value={progress} className="h-2 bg-gray-200" indicatorClassName="bg-purple-600" />
                         </div>
                         
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={toggleSession} className="flex items-center">
+                {/* Session controls */}
+                <div className="flex justify-between mb-6">
+                  <Button variant="outline" size="sm" onClick={toggleSession}>
                             {isSessionActive ? (
                               <>
-                                <Pause className="w-4 h-4 mr-1" /> Tạm dừng
+                        <Pause className="w-4 h-4 mr-2" />
+                        Tạm dừng
                               </>
                             ) : (
                               <>
-                                <Play className="w-4 h-4 mr-1" /> Tiếp tục
+                        <Play className="w-4 h-4 mr-2" />
+                        Tiếp tục
                               </>
                             )}
                           </Button>
-                          <Button variant="outline" size="sm" onClick={nextCard} className="flex items-center">
-                            <SkipForward className="w-4 h-4 mr-1" /> Bỏ qua
+                  <Button variant="outline" size="sm" onClick={nextCard}>
+                    <SkipForward className="w-4 h-4 mr-2" />
+                    Bỏ qua
                           </Button>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Flashcard */}
                 {isSessionActive && studyMode === 'flashcard' && (

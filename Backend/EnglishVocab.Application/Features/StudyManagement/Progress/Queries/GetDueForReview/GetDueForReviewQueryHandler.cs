@@ -37,24 +37,34 @@ namespace EnglishVocab.Application.Features.StudyManagement.Progress.Queries.Get
                 return new List<WordProgressDto>();
             }
             
+            // Extrair os IDs das palavras e converter para int
             var wordIds = dueProgress.Select(p => p.WordId).ToList();
-            var words = await _wordRepository.GetByIdsAsync(wordIds);
+            
+            // Buscar todas as palavras com detalhes relacionados
+            var allWordsWithDetails = await _wordRepository.GetAllWithDetailsAsync(cancellationToken: cancellationToken);
+            
+            // Filtrar apenas as palavras que estão na lista de IDs
+            var wordsWithDetails = allWordsWithDetails.Where(w => wordIds.Contains(w.Word.Id)).ToList();
             
             // Map to WordProgressDto
             var result = new List<WordProgressDto>();
             foreach (var progress in dueProgress)
             {
-                var word = words.FirstOrDefault(w => w.Id == progress.WordId);
-                if (word != null)
+                var wordDetail = wordsWithDetails.FirstOrDefault(w => w.Word.Id == progress.WordId);
+                if (wordDetail.Word != null)
                 {
+                    var word = wordDetail.Word;
+                    var category = wordDetail.Category;
+                    var difficultyLevel = wordDetail.DifficultyLevel;
+                    
                     result.Add(new WordProgressDto
                     {
                         Id = progress.Id,
                         WordId = word.Id,
                         Word = word.English,
                         Translation = word.Vietnamese,
-                        Category = word.Category,
-                        DifficultyLevel = word.DifficultyLevel.ToString(),
+                        Category = category?.Name ?? "Unknown",
+                        DifficultyLevel = difficultyLevel?.Name ?? "Unknown",
                         MasteryLevel = progress.MasteryLevel.ToString(),
                         LastReviewed = progress.LastReviewed,
                         NextReviewDue = progress.NextReviewDate,

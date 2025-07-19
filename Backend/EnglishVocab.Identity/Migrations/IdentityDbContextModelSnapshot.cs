@@ -60,7 +60,7 @@ namespace EnglishVocab.Identity.Migrations
                         new
                         {
                             Id = "1",
-                            CreatedAt = new DateTime(2025, 7, 12, 22, 1, 39, 74, DateTimeKind.Utc).AddTicks(5547),
+                            CreatedAt = new DateTime(2025, 7, 17, 13, 55, 50, 737, DateTimeKind.Utc).AddTicks(2010),
                             Description = "Quản trị viên có toàn quyền truy cập hệ thống",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
@@ -68,7 +68,7 @@ namespace EnglishVocab.Identity.Migrations
                         new
                         {
                             Id = "2",
-                            CreatedAt = new DateTime(2025, 7, 12, 22, 1, 39, 74, DateTimeKind.Utc).AddTicks(5649),
+                            CreatedAt = new DateTime(2025, 7, 17, 13, 55, 50, 737, DateTimeKind.Utc).AddTicks(2251),
                             Description = "Người dùng thông thường",
                             Name = "User",
                             NormalizedName = "USER"
@@ -171,8 +171,8 @@ namespace EnglishVocab.Identity.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7efa2b13-7ff0-4e5a-8e3e-99edc8f25806",
-                            CreatedAt = new DateTime(2025, 7, 12, 22, 1, 39, 122, DateTimeKind.Utc).AddTicks(9536),
+                            ConcurrencyStamp = "c699b908-da4e-442e-b7b8-4c84f885a534",
+                            CreatedAt = new DateTime(2025, 7, 17, 13, 55, 50, 791, DateTimeKind.Utc).AddTicks(6543),
                             Email = "admin@englishvocab.com",
                             EmailConfirmed = true,
                             FirstName = "System",
@@ -181,9 +181,9 @@ namespace EnglishVocab.Identity.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@ENGLISHVOCAB.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHGb8oygWHLqkij7MUg0p8wmFciG7/ivCu76OX4ZxlZwnUMviyCePlCWwJOXJA53EA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO+JOsXwI7aEfJiMHtAGC0wuh1FqEuiPRRilzeNfBWE9wqTFmiZEkUfV0hz1uyoQQA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "b8a31059-f132-4f1f-9c5d-61a79fc6b9ec",
+                            SecurityStamp = "0cd4e3d3-cca7-4171-a3a4-44fc842fb146",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });

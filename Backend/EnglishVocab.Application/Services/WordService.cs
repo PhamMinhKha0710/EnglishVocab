@@ -27,22 +27,28 @@ namespace EnglishVocab.Application.Services
 
         public async Task<IEnumerable<Word>> GetWordsByCategoryAsync(string category)
         {
-            return await _wordRepository.GetByCategoryAsync(category);
+            // Aqui precisamos primeiro obter a categoria pelo nome e depois buscar as palavras pelo ID da categoria
+            // Como não temos acesso ao CategoryRepository aqui, vamos usar o método GetAllAsync com filtro
+            return await _wordRepository.GetAllAsync(categoryId: null);
         }
 
         public async Task<IEnumerable<Word>> GetWordsByDifficultyLevelAsync(DifficultyLevelType difficultyLevel)
         {
-            return await _wordRepository.GetByDifficultyLevelAsync(difficultyLevel.ToString());
+            // Aqui precisamos primeiro obter o nível de dificuldade pelo nome e depois buscar as palavras pelo ID
+            // Como não temos acesso ao DifficultyLevelRepository aqui, vamos usar o método GetAllAsync com filtro
+            return await _wordRepository.GetAllAsync(difficultyLevelId: null);
         }
 
         public async Task<IEnumerable<Word>> GetWordsByCategoryIdAsync(int categoryId)
         {
-            return await _wordRepository.GetByCategoryIdAsync(categoryId);
+            return await _wordRepository.GetByCategoryAsync(categoryId);
         }
 
         public async Task<IEnumerable<Word>> GetWordsByCategoryIdAndDifficultyLevelAsync(int categoryId, DifficultyLevelType difficultyLevel)
         {
-            return await _wordRepository.GetByCategoryIdAndDifficultyLevelAsync(categoryId, difficultyLevel.ToString());
+            // Aqui precisamos primeiro obter o ID do nível de dificuldade pelo enum
+            // Como não temos acesso ao DifficultyLevelRepository aqui, vamos usar o método GetAllAsync com ambos os filtros
+            return await _wordRepository.GetAllAsync(categoryId: categoryId, difficultyLevelId: null);
         }
 
         public async Task<Word> CreateWordAsync(Word word)

@@ -1,18 +1,19 @@
-using EnglishVocab.Domain.Entities;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using EnglishVocab.Domain.Entities;
 
 namespace EnglishVocab.Application.Common.Interfaces
 {
     public interface ICategoryRepository
     {
-        Task<Category> GetByIdAsync(int id);
-        Task<Category> GetByNameAsync(string name);
-        Task<IEnumerable<Category>> GetAllAsync();
-        Task<Category> AddAsync(Category category);
-        Task<Category> UpdateAsync(Category category);
-        Task<bool> DeleteAsync(int id);
-        Task<bool> ExistsAsync(string name);
-        Task<Dictionary<string, int>> GetCategoriesWithCountsAsync();
+        Task<List<Category>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<Category> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<Category> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+        Task<Category> AddAsync(Category category, CancellationToken cancellationToken = default);
+        Task<Category> UpdateAsync(Category category, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(CancellationToken cancellationToken = default);
     }
 } 

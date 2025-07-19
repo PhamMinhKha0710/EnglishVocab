@@ -42,16 +42,69 @@ namespace EnglishVocab.Application.Services
             };
         }
 
-        public async Task<DataTableResponse<T>> CreateResponseAsync<T>(
+        public Task<DataTableResponse<T>> CreateResponseAsync<T>(
             IEnumerable<T> data,
             DataTableRequest request,
             CancellationToken cancellationToken = default)
         {
+            // Đếm tổng số bản ghi trước khi áp dụng bất kỳ bộ lọc nào
+            int totalCount = data.Count();
+            
             // Chuyển đổi IEnumerable thành IQueryable
             var query = data.AsQueryable();
             
-            // Sử dụng phương thức đã có để xử lý
-            return await CreateResponseAsync(query, request, cancellationToken);
+            // Áp dụng sắp xếp
+            query = ApplySorting(query, request);
+
+            // Đếm số bản ghi sau khi lọc
+            int filteredCount = query.Count();
+
+            // Áp dụng phân trang
+            query = ApplyPaging(query, request);
+
+            // Lấy dữ liệu
+            var result = query.ToList();
+
+            // Tạo response
+            var response = new DataTableResponse<T>
+            {
+                Data = result,
+                RecordsTotal = totalCount,
+                RecordsFiltered = filteredCount
+            };
+            
+            return Task.FromResult(response);
+        }
+        
+        public PaginatedResponse<T> CreatePaginatedResponse<T>(
+            IQueryable<T> query,
+            PaginationParameters parameters)
+        {
+            // Đếm tổng số bản ghi
+            int totalCount = query.Count();
+            
+            // Áp dụng sắp xếp nếu có
+            if (!string.IsNullOrEmpty(parameters.OrderBy))
+            {
+                bool isDescending = parameters.OrderDirection?.ToLower() == "desc";
+                query = ApplyOrderBy(query, parameters.OrderBy, isDescending);
+            }
+            
+            // Áp dụng phân trang
+            var items = query
+                .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+                .Take(parameters.PageSize)
+                .ToList();
+            
+            // Tạo response
+            return new PaginatedResponse<T>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = parameters.PageNumber,
+                PageSize = parameters.PageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)parameters.PageSize)
+            };
         }
 
         public IQueryable<T> ApplyPaging<T>(
@@ -82,6 +135,33 @@ namespace EnglishVocab.Application.Services
 
             // Áp dụng sắp xếp
             var methodName = request.Order.ToLower() == "asc" ? "OrderBy" : "OrderByDescending";
+            var resultExpression = Expression.Call(
+                typeof(Queryable),
+                methodName,
+                new[] { typeof(T), propertyInfo.PropertyType },
+                query.Expression,
+                Expression.Quote(lambda));
+
+            return query.Provider.CreateQuery<T>(resultExpression);
+        }
+        
+        private IQueryable<T> ApplyOrderBy<T>(
+            IQueryable<T> query,
+            string propertyName,
+            bool isDescending)
+        {
+            // Lấy thông tin thuộc tính cần sắp xếp
+            var propertyInfo = GetPropertyInfo<T>(propertyName);
+            if (propertyInfo == null)
+                return query;
+
+            // Tạo expression để sắp xếp
+            var parameter = Expression.Parameter(typeof(T), "x");
+            var property = Expression.Property(parameter, propertyInfo);
+            var lambda = Expression.Lambda(property, parameter);
+
+            // Áp dụng sắp xếp
+            var methodName = isDescending ? "OrderByDescending" : "OrderBy";
             var resultExpression = Expression.Call(
                 typeof(Queryable),
                 methodName,

@@ -13,6 +13,10 @@ namespace EnglishVocab.Infrastructure.Configurations
             // Basic configurations
             builder.HasKey(w => w.Id);
             
+            // Vô hiệu hóa tính năng tự tăng cho cột ID
+            builder.Property(w => w.Id)
+                .ValueGeneratedNever();
+            
             builder.Property(w => w.English)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -27,9 +31,6 @@ namespace EnglishVocab.Infrastructure.Configurations
             builder.Property(w => w.Example)
                 .HasMaxLength(500);
 
-            builder.Property(w => w.ExampleTranslation)
-                .HasMaxLength(500);
-
             builder.Property(w => w.Notes)
                 .HasMaxLength(500);
 
@@ -40,12 +41,18 @@ namespace EnglishVocab.Infrastructure.Configurations
                 .HasMaxLength(255);
 
             // Configure the relationship with Category
-            builder.HasOne(w => w.CategoryEntity)
-                .WithMany(c => c.Words)
+            builder.HasOne<Category>()
+                .WithMany()
                 .HasForeignKey(w => w.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Seed data cho Word
+            // Configure the relationship with DifficultyLevel
+            builder.HasOne<DifficultyLevel>()
+                .WithMany()
+                .HasForeignKey(w => w.DifficultyLevelId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Seed data cho Word - PHẢI có ít nhất 2 từ với ID 1 và 2 để đảm bảo tham chiếu khóa ngoại từ bảng UserProgresses
             builder.HasData(
                 new Word
                 {
@@ -54,12 +61,11 @@ namespace EnglishVocab.Infrastructure.Configurations
                     Vietnamese = "Xin chào",
                     Pronunciation = "həˈloʊ",
                     Example = "Hello, how are you today?",
-                    ExampleTranslation = "Xin chào, hôm nay bạn khỏe không?",
                     Notes = "Common greeting",
                     ImageUrl = "/images/hello.jpg",
                     AudioUrl = "/audio/hello.mp3",
-                    DifficultyLevel = DifficultyLevelType.Easy,
-                    Category = "Greetings",
+                    CategoryId = 1, // Assuming Category ID for "Greetings"
+                    DifficultyLevelId = (int)DifficultyLevelType.Easy,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",
@@ -72,12 +78,11 @@ namespace EnglishVocab.Infrastructure.Configurations
                     Vietnamese = "Tạm biệt",
                     Pronunciation = "ɡʊdˈbaɪ",
                     Example = "Goodbye, see you tomorrow!",
-                    ExampleTranslation = "Tạm biệt, hẹn gặp lại ngày mai!",
                     Notes = "Common farewell",
                     ImageUrl = "/images/goodbye.jpg",
                     AudioUrl = "/audio/goodbye.mp3",
-                    DifficultyLevel = DifficultyLevelType.Easy,
-                    Category = "Greetings",
+                    CategoryId = 1, // Assuming Category ID for "Greetings"
+                    DifficultyLevelId = (int)DifficultyLevelType.Easy,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",
@@ -90,12 +95,11 @@ namespace EnglishVocab.Infrastructure.Configurations
                     Vietnamese = "Cảm ơn",
                     Pronunciation = "θæŋk ju",
                     Example = "Thank you for your help.",
-                    ExampleTranslation = "Cảm ơn vì sự giúp đỡ của bạn.",
                     Notes = "Common expression of gratitude",
                     ImageUrl = "/images/thankyou.jpg",
                     AudioUrl = "/audio/thankyou.mp3",
-                    DifficultyLevel = DifficultyLevelType.Easy,
-                    Category = "Expressions",
+                    CategoryId = 2, // Assuming Category ID for "Expressions"
+                    DifficultyLevelId = (int)DifficultyLevelType.Easy,
                     DateCreated = DateTime.Now,
                     CreatedBy = "System",
                     ModifiedBy = "System",

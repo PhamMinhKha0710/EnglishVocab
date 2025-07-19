@@ -12,10 +12,20 @@ namespace EnglishVocab.Application.Features.VocabularyManagement.Words.DTOs
         public string Notes { get; set; }
         public string ImageUrl { get; set; }
         public string AudioUrl { get; set; }
-        public string DifficultyLevel { get; set; }
+        
+        // Foreign keys
         public int? CategoryId { get; set; }
+        public int? DifficultyLevelId { get; set; }
+        
+        // Related information
         public string CategoryName { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
+        public string DifficultyLevelName { get; set; }
+        public int? DifficultyValue { get; set; }
+        
+        // Audit fields
+        public DateTime DateCreated { get; set; }
+        public DateTime? DateModified { get; set; }
+        public string CreatedBy { get; set; }
+        public string ModifiedBy { get; set; }
     }
 } 

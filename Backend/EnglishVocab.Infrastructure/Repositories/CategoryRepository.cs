@@ -1,95 +1,68 @@
-using EnglishVocab.Application.Common.Interfaces;
-using EnglishVocab.Domain.Entities;
-using EnglishVocab.Infrastructure.DatabaseContext;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using EnglishVocab.Application.Common.Interfaces;
+using EnglishVocab.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace EnglishVocab.Infrastructure.Repositories
 {
     public class CategoryRepository : ICategoryRepository
     {
-        private readonly EnglishVocabDatabaseContext _context;
+        private readonly IApplicationDbContext _dbContext;
 
-        public CategoryRepository(EnglishVocabDatabaseContext context)
+        public CategoryRepository(IApplicationDbContext dbContext)
         {
-            _context = context;
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<Category> AddAsync(Category category)
+        public async Task<List<Category>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            category.DateCreated = DateTime.UtcNow;
-            await _context.Categories.AddAsync(category);
-            await _context.SaveChangesAsync();
+            return await _dbContext.Categories.ToListAsync(cancellationToken);
+        }
+
+        public async Task<Category> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Categories.FindAsync(new object[] { id }, cancellationToken);
+        }
+
+        public async Task<Category> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Categories
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower(), cancellationToken);
+        }
+
+        public async Task<Category> AddAsync(Category category, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.Categories.AddAsync(category, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return category;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<Category> UpdateAsync(Category category, CancellationToken cancellationToken = default)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-                return false;
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return true;
+            _dbContext.Categories.Update(category);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return category;
         }
 
-        public async Task<bool> ExistsAsync(string name)
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            return await _context.Categories
-                .AnyAsync(c => c.Name.ToLower() == name.ToLower());
+            var category = await _dbContext.Categories.FindAsync(new object[] { id }, cancellationToken);
+            if (category != null)
+            {
+                _dbContext.Categories.Remove(category);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return true;
+            }
+            return false;
         }
-
-        public async Task<IEnumerable<Category>> GetAllAsync()
+        
+        public async Task<int> CountAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.Categories
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-        }
-
-        public async Task<Category> GetByIdAsync(int id)
-        {
-            return await _context.Categories.FindAsync(id);
-        }
-
-        public async Task<Category> GetByNameAsync(string name)
-        {
-            return await _context.Categories
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower());
-        }
-
-        public async Task<Dictionary<string, int>> GetCategoriesWithCountsAsync()
-        {
-            var categories = await _context.Categories
-                .Select(c => new
-                {
-                    c.Name,
-                    WordCount = c.Words.Count()
-                })
-                .ToDictionaryAsync(
-                    c => c.Name,
-                    c => c.WordCount
-                );
-
-            return categories;
-        }
-
-        public async Task<Category> UpdateAsync(Category category)
-        {
-            var existingCategory = await _context.Categories.FindAsync(category.Id);
-            if (existingCategory == null)
-                return null;
-
-            existingCategory.Name = category.Name;
-            existingCategory.Description = category.Description;
-            existingCategory.DateModified = DateTime.UtcNow;
-
-            _context.Categories.Update(existingCategory);
-            await _context.SaveChangesAsync();
-            return existingCategory;
+            return await _dbContext.Categories.CountAsync(cancellationToken);
         }
     }
 } 
