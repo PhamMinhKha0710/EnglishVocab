@@ -40,6 +40,15 @@ interface RefreshTokenParams {
   refreshToken: string;
 }
 
+// Interface cho Category
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  wordCount?: number;
+  Name?: string; // Hỗ trợ cả key Name với chữ hoa đầu tiên (API có thể trả về)
+}
+
 // Interface cho tham số cập nhật hồ sơ người dùng
 export interface UpdateProfileParams {
   userId?: string;
@@ -159,6 +168,42 @@ export const apiService = {
       return data;
     } catch (error: any) {
       console.error("Lỗi đăng nhập:", error.message);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách danh mục từ API
+  async getCategories(token: string | undefined): Promise<Category[]> {
+    try {
+      // Nếu không có token, trả về mảng rỗng và ném lỗi
+      if (!token) {
+        console.warn("Không có token xác thực để lấy danh mục");
+        throw new Error("Bạn cần đăng nhập để lấy danh mục");
+      }
+
+      // Gọi API lấy danh mục
+      const response = await this.fetchWithAuth(
+        `${API_URL}/Category`, 
+        { method: "GET" },
+        token
+      );
+
+      // Kiểm tra dữ liệu trả về
+      if (Array.isArray(response)) {
+        // API trả về mảng trực tiếp (không có phân trang)
+        return response;
+      } else if (response && Array.isArray(response.data)) {
+        // API trả về đối tượng có thuộc tính data là mảng (có phân trang)
+        return response.data;
+      } else if (response && Array.isArray(response.items)) {
+        // API trả về đối tượng có thuộc tính items là mảng (có phân trang)
+        return response.items;
+      } else {
+        console.error("Dữ liệu danh mục không đúng định dạng:", response);
+        throw new Error("Dữ liệu danh mục không đúng định dạng");
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi lấy danh mục:", error.message);
       throw error;
     }
   },
