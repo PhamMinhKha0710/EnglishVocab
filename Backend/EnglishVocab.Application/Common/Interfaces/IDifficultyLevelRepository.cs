@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+
 using EnglishVocab.Domain.Entities;
-using System.Linq;
+
 
 namespace EnglishVocab.Application.Common.Interfaces
 {

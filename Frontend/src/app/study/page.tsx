@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,11 +29,23 @@ import {
   Info,
   ExternalLink,
   Zap,
-  Loader2
+  Loader2,
+  Star
 } from "lucide-react"
 import { vocabularyData } from "@/lib/vocabulary-data"
-import { apiService, Category } from "@/services/api-service"
+import { apiService, Category, DifficultyLevel } from "@/services/api-service"
 import { useAuth } from "@/contexts/auth-context"
+
+// Tạo cache cho API data
+const API_CACHE = {
+  categories: null as Category[] | null,
+  difficultyLevels: null as DifficultyLevel[] | null,
+  lastFetchTime: {
+    categories: 0,
+    difficultyLevels: 0
+  },
+  CACHE_DURATION: 5 * 60 * 1000 // 5 phút
+};
 
 export default function StudyPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -51,35 +63,89 @@ export default function StudyPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState<boolean>(false)
   const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [difficultyLevels, setDifficultyLevels] = useState<DifficultyLevel[]>([])
+  const [loadingDifficultyLevels, setLoadingDifficultyLevels] = useState<boolean>(false)
+  const [difficultyLevelError, setDifficultyLevelError] = useState<string | null>(null)
   const { user } = useAuth()
+  const [dataLoaded, setDataLoaded] = useState(false)
 
-  // Lấy danh mục từ API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoadingCategories(true)
-      setCategoryError(null)
-      try {
-        const token = user?.accessToken
-        const categoriesData = await apiService.getCategories(token)
-        console.log("Đã tải danh mục từ API:", categoriesData)
-        
-        // Log chi tiết hơn để xem cấu trúc dữ liệu
-        if (categoriesData && categoriesData.length > 0) {
-          console.log("Chi tiết category:", JSON.stringify(categoriesData, null, 2))
-          console.log("Thuộc tính của category:", Object.keys(categoriesData[0]))
-        }
-        
-        setCategories(categoriesData)
-      } catch (error: any) {
-        console.error("Lỗi khi tải danh mục:", error.message)
-        setCategoryError(error.message)
-      } finally {
-        setLoadingCategories(false)
-      }
+  // Hàm fetch data với caching để tránh gọi API quá nhiều lần
+  const fetchDataWithCache = useCallback(async () => {
+    // Chỉ fetch khi có user và token
+    if (!user?.accessToken || dataLoaded) return;
+
+    const currentTime = Date.now();
+    const fetchPromises = [];
+    let shouldUpdateState = false;
+
+    // Fetch categories nếu cần
+    if (
+      !API_CACHE.categories || 
+      (currentTime - API_CACHE.lastFetchTime.categories > API_CACHE.CACHE_DURATION)
+    ) {
+      setLoadingCategories(true);
+      const categoriesPromise = apiService.getCategories(user.accessToken)
+        .then(data => {
+          API_CACHE.categories = data;
+          API_CACHE.lastFetchTime.categories = currentTime;
+          setCategories(data);
+          shouldUpdateState = true;
+        })
+        .catch(error => {
+          setCategoryError(error.message);
+        })
+        .finally(() => {
+          setLoadingCategories(false);
+        });
+      fetchPromises.push(categoriesPromise);
+    } else if (API_CACHE.categories) {
+      // Sử dụng cache nếu có
+      setCategories(API_CACHE.categories);
     }
 
-    fetchCategories()
-  }, [user])
+    // Fetch difficulty levels nếu cần
+    if (
+      !API_CACHE.difficultyLevels || 
+      (currentTime - API_CACHE.lastFetchTime.difficultyLevels > API_CACHE.CACHE_DURATION)
+    ) {
+      setLoadingDifficultyLevels(true);
+      const difficultyPromise = apiService.getDifficultyLevels(user.accessToken)
+        .then(data => {
+          // Thêm log để debug dữ liệu
+          console.log("Dữ liệu độ khó từ API:", data);
+          if (data && data.length > 0) {
+            console.log("Cấu trúc độ khó:", Object.keys(data[0]));
+            console.log("Mẫu dữ liệu độ khó:", JSON.stringify(data[0]));
+          }
+          
+          API_CACHE.difficultyLevels = data;
+          API_CACHE.lastFetchTime.difficultyLevels = currentTime;
+          setDifficultyLevels(data);
+          shouldUpdateState = true;
+        })
+        .catch(error => {
+          setDifficultyLevelError(error.message);
+        })
+        .finally(() => {
+          setLoadingDifficultyLevels(false);
+        });
+      fetchPromises.push(difficultyPromise);
+    } else if (API_CACHE.difficultyLevels) {
+      // Sử dụng cache nếu có
+      setDifficultyLevels(API_CACHE.difficultyLevels);
+    }
+
+    // Đợi cả hai promise hoàn thành
+    if (fetchPromises.length > 0) {
+      await Promise.all(fetchPromises);
+      setDataLoaded(true);
+    }
+  }, [user, dataLoaded]);
+
+  // Gọi fetch data một lần duy nhất khi component mount hoặc user thay đổi
+  useEffect(() => {
+    fetchDataWithCache();
+  }, [fetchDataWithCache]);
 
   // Chuyển đổi category sang đúng định dạng cho so sánh
   const getCategoryValue = (categoryName: string) => {
@@ -319,23 +385,82 @@ export default function StudyPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-2 block">Độ khó</label>
                       <div className="flex gap-2 flex-wrap">
-                        {["all", "beginner", "intermediate", "advanced"].map((level) => (
-                          <Button
-                            key={level}
-                            variant={selectedDifficulty === level ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedDifficulty(level)}
-                            className={selectedDifficulty === level ? "bg-blue-600 hover:bg-blue-700" : ""}
-                          >
-                            {level === "all"
-                              ? "Tất cả"
-                              : level === "beginner"
-                                ? "Cơ bản"
-                                : level === "intermediate"
-                                  ? "Trung bình"
-                                  : "Nâng cao"}
-                          </Button>
-                        ))}
+                        {/* Trạng thái đang tải */}
+                        {loadingDifficultyLevels && (
+                          <div className="flex items-center justify-center w-full py-2 text-blue-600">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Đang tải cấp độ khó...
+                          </div>
+                        )}
+                        
+                        {/* Hiển thị lỗi nếu có */}
+                        {difficultyLevelError && (
+                          <div className="text-red-500 text-sm w-full py-2">
+                            Lỗi: {difficultyLevelError}. Đang sử dụng cấp độ khó mặc định.
+                          </div>
+                        )}
+                        
+                        {/* Nút "Tất cả" luôn được hiển thị */}
+                        <Button
+                          variant={selectedDifficulty === "all" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedDifficulty("all")}
+                          className={selectedDifficulty === "all" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                        >
+                          Tất cả
+                        </Button>
+                        
+                        {/* Cấp độ khó từ API */}
+                        {difficultyLevels && difficultyLevels.length > 0 ? (
+                          difficultyLevels.map((difficulty) => {
+                            // Lấy tên và giá trị của cấp độ khó từ API
+                            const difficultyName = difficulty.name?.toLowerCase() || 
+                              difficulty.Name?.toLowerCase() || 
+                              String(difficulty.id).toLowerCase() || 
+                              "unknown";
+                            
+                            // Hiển thị tên độ khó và giữ nguyên tên hiển thị
+                            return (
+                              <Button
+                                key={difficulty.id}
+                                variant={selectedDifficulty === difficultyName ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedDifficulty(difficultyName)}
+                                className={selectedDifficulty === difficultyName ? "bg-blue-600 hover:bg-blue-700" : ""}
+                              >
+                                {difficulty.name || difficulty.Name || getDifficultyLabel(difficultyName)}
+                              </Button>
+                            );
+                          })
+                        ) : !loadingDifficultyLevels && !difficultyLevelError ? (
+                          // Cấp độ khó mặc định nếu API không trả về dữ liệu
+                          <>
+                            <Button
+                              variant={selectedDifficulty === "beginner" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedDifficulty("beginner")}
+                              className={selectedDifficulty === "beginner" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                            >
+                              Cơ bản
+                            </Button>
+                            <Button
+                              variant={selectedDifficulty === "intermediate" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedDifficulty("intermediate")}
+                              className={selectedDifficulty === "intermediate" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                            >
+                              Trung bình
+                            </Button>
+                            <Button
+                              variant={selectedDifficulty === "advanced" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedDifficulty("advanced")}
+                              className={selectedDifficulty === "advanced" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                            >
+                              Nâng cao
+                            </Button>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                     <div>
@@ -417,18 +542,28 @@ export default function StudyPage() {
                         ) : null}
                       </div>
                     </div>
-                    
-                    {!isSessionActive && currentCardIndex === 0 && (
-                      <Button onClick={startSession} className="w-full bg-green-600 hover:bg-green-700 mt-4">
-                        <Play className="w-4 h-4 mr-2" />
-                        Bắt đầu học
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
               )}
 
-              {/* Stats Card */}
+              {/* Help Card */}
+              <Card className="border border-gray-200 bg-white/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold text-gray-800 flex items-center">
+                    <Info className="w-4 h-4 mr-1.5 text-blue-500" />
+                    Hướng dẫn học
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2 text-sm text-gray-600">
+                  <ul className="space-y-1 list-disc pl-5">
+                    <li>Nhấp vào thẻ để xem nghĩa</li>
+                    <li>Chọn "<span className="text-green-600 font-medium">Đã biết</span>" nếu bạn đã thuộc từ này</li>
+                    <li>Chọn "<span className="text-red-600 font-medium">Chưa biết</span>" nếu bạn cần ôn lại</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Session information */}
               {isSessionActive && (
                 <Card className="border-2 border-purple-100">
                   <CardHeader className="pb-2">
@@ -474,23 +609,6 @@ export default function StudyPage() {
                   </CardContent>
                 </Card>
               )}
-              
-              {/* Help Card */}
-              <Card className="border border-gray-200 bg-white/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-bold text-gray-800 flex items-center">
-                    <Info className="w-4 h-4 mr-1.5 text-blue-500" />
-                    Hướng dẫn học
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-2 text-sm text-gray-600">
-                  <ul className="space-y-1 list-disc pl-5">
-                    <li>Nhấp vào thẻ để xem nghĩa</li>
-                    <li>Chọn "<span className="text-green-600 font-medium">Đã biết</span>" nếu bạn đã thuộc từ này</li>
-                    <li>Chọn "<span className="text-red-600 font-medium">Chưa biết</span>" nếu bạn cần ôn lại</li>
-                  </ul>
-                </CardContent>
-              </Card>
             </div>
           </div>
           
@@ -498,55 +616,108 @@ export default function StudyPage() {
           <div className="lg:col-span-2">
             {!isSessionActive ? (
               <div className="flex flex-col gap-6">
-                <Card className="border-2 border-purple-100">
+                <Card className="border-2 border-purple-100 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-purple-500 to-blue-500 w-full"></div>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-bold text-center text-purple-900">
+                    <CardTitle className="text-2xl font-bold text-center text-purple-900">
                       Sẵn sàng học?
                     </CardTitle>
-                </CardHeader>
-                  <CardContent className="pt-4 text-center space-y-6">
-                    <div className="mb-8 text-8xl flex justify-center">
-                      <Lightbulb className="w-24 h-24 text-yellow-400" />
-                    </div>
-                    
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-center text-gray-600">
                       Bắt đầu session học từ vựng với {filteredVocabulary.length} từ
                     </p>
+                  </CardHeader>
+                  <CardContent className="pt-4 text-center space-y-6">
+                    <div className="mb-6 flex justify-center">
+                      <div className="bg-yellow-100 p-6 rounded-full">
+                        <Lightbulb className="w-20 h-20 text-yellow-400" />
+                      </div>
+                    </div>
                     
                     <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-purple-50 p-4 rounded-lg text-center">
-                        <div className="text-xl font-bold text-purple-600">{filteredVocabulary.length}</div>
+                      <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-100 shadow-sm hover:shadow-md transition-all">
+                        <div className="text-2xl font-bold text-purple-600">{filteredVocabulary.length}</div>
                         <div className="text-sm text-purple-500">Từ vựng</div>
                       </div>
-                      <div className="bg-blue-50 p-4 rounded-lg text-center">
-                        <div className="text-xl font-bold text-blue-600">5</div>
+                      <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-100 shadow-sm hover:shadow-md transition-all">
+                        <div className="text-2xl font-bold text-blue-600">5</div>
                         <div className="text-sm text-blue-500">Phút</div>
                       </div>
-                      <div className="bg-green-50 p-4 rounded-lg text-center">
-                        <div className="text-xl font-bold text-green-600">+80</div>
+                      <div className="bg-green-50 p-4 rounded-lg text-center border border-green-100 shadow-sm hover:shadow-md transition-all">
+                        <div className="text-2xl font-bold text-green-600">+{filteredVocabulary.length * 10}</div>
                         <div className="text-sm text-green-500">Điểm tối đa</div>
+                      </div>
                     </div>
-                  </div>
-                  
-                    <Button onClick={startSession} className="w-full bg-purple-600 hover:bg-purple-700">
-                      <Play className="w-4 h-4 mr-2" />
-                    Bắt đầu học ngay
-                  </Button>
-                </CardContent>
-              </Card>
+                    
+                    <div className="space-y-3">
+                      <Button 
+                        onClick={startSession} 
+                        className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg shadow-md"
+                      >
+                        <Play className="w-5 h-5 mr-2" />
+                        Bắt đầu học ngay
+                      </Button>
+                      
+                      <Link to="/" className="block mt-4">
+                        <Button variant="outline" className="w-full">
+                          <ArrowLeft className="w-4 h-4 mr-2" />
+                          Quay về trang chủ
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <div className="space-y-3">
-                  <Button onClick={startSession} className="w-full bg-purple-600 hover:bg-purple-700">
-                    <Play className="w-4 h-4 mr-2" />
-                    Bắt đầu session mới
-                  </Button>
-                  <Link to="/" className="block">
-                    <Button variant="outline" className="w-full">
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Quay về trang chủ
-                    </Button>
-                  </Link>
-                </div>
+                <Card className="border border-gray-200 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium flex items-center">
+                      <Info className="w-5 h-5 text-blue-500 mr-2" />
+                      Thông tin học tập
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="space-y-3 text-sm text-gray-600">
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Flashcard</p>
+                          <p>Ôn tập hiệu quả với thẻ ghi nhớ thông minh, xem từ và nghĩa</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Trắc nghiệm</p>
+                          <p>Làm bài trắc nghiệm để kiểm tra kiến thức và củng cố từ vựng</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Gõ từ</p>
+                          <p>Luyện tập gõ từ để nhớ chính tả và củng cố trí nhớ</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5">
+                          <Star className="w-4 h-4 text-yellow-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Phần thưởng</p>
+                          <p>Nhận {filteredVocabulary.length * 10} điểm khi hoàn thành tất cả các từ</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <>

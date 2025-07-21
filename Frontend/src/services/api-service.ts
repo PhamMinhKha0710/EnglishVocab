@@ -49,6 +49,15 @@ export interface Category {
   Name?: string; // Hỗ trợ cả key Name với chữ hoa đầu tiên (API có thể trả về)
 }
 
+// Interface cho DifficultyLevel
+export interface DifficultyLevel {
+  id: number;
+  name: string;
+  Name?: string; // Thêm trường Name với chữ cái đầu tiên viết hoa (API có thể trả về)
+  description?: string;
+  value: number;
+}
+
 // Interface cho tham số cập nhật hồ sơ người dùng
 export interface UpdateProfileParams {
   userId?: string;
@@ -129,8 +138,6 @@ export const apiService = {
         },
         body: JSON.stringify(params),
       });
-
-      console.log("Login status code:", response.status);
       
       if (!response.ok) {
         if (response.status === 401) {
@@ -140,7 +147,6 @@ export const apiService = {
       }
 
       const rawData = await response.json();
-      console.log("Login response data keys:", Object.keys(rawData));
       
       // Đảm bảo chuyển đổi cả chữ hoa và chữ thường
       const data: AuthUser = {
@@ -159,8 +165,6 @@ export const apiService = {
         message: rawData.message || rawData.Message || ""
       };
 
-      console.log("Xác thực thành công:", data.isAuthenticated);
-
       if (!data.isAuthenticated) {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
@@ -177,7 +181,6 @@ export const apiService = {
     try {
       // Nếu không có token, trả về mảng rỗng và ném lỗi
       if (!token) {
-        console.warn("Không có token xác thực để lấy danh mục");
         throw new Error("Bạn cần đăng nhập để lấy danh mục");
       }
 
@@ -199,11 +202,44 @@ export const apiService = {
         // API trả về đối tượng có thuộc tính items là mảng (có phân trang)
         return response.items;
       } else {
-        console.error("Dữ liệu danh mục không đúng định dạng:", response);
         throw new Error("Dữ liệu danh mục không đúng định dạng");
       }
     } catch (error: any) {
       console.error("Lỗi khi lấy danh mục:", error.message);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách cấp độ khó từ API
+  async getDifficultyLevels(token: string | undefined): Promise<DifficultyLevel[]> {
+    try {
+      // Nếu không có token, trả về mảng rỗng và ném lỗi
+      if (!token) {
+        throw new Error("Bạn cần đăng nhập để lấy cấp độ khó");
+      }
+
+      // Gọi API lấy cấp độ khó
+      const response = await this.fetchWithAuth(
+        `${API_URL}/DifficultyLevels`, 
+        { method: "GET" },
+        token
+      );
+
+      // Kiểm tra dữ liệu trả về
+      if (Array.isArray(response)) {
+        // API trả về mảng trực tiếp (không có phân trang)
+        return response;
+      } else if (response && Array.isArray(response.data)) {
+        // API trả về đối tượng có thuộc tính data là mảng (có phân trang)
+        return response.data;
+      } else if (response && Array.isArray(response.items)) {
+        // API trả về đối tượng có thuộc tính items là mảng (có phân trang)
+        return response.items;
+      } else {
+        throw new Error("Dữ liệu cấp độ khó không đúng định dạng");
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi lấy cấp độ khó:", error.message);
       throw error;
     }
   },
@@ -258,8 +294,6 @@ export const apiService = {
         throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       }
 
-      console.log("Gửi yêu cầu lấy thông tin hồ sơ người dùng");
-
       const response = await fetch(`${API_URL}/UserProfile/me`, {
         method: "GET",
         headers: {
@@ -267,8 +301,6 @@ export const apiService = {
           "Content-Type": "application/json",
         },
       });
-
-      console.log("Get profile status code:", response.status);
 
       // Xử lý các trường hợp lỗi cụ thể
       if (response.status === 401) {
@@ -299,8 +331,6 @@ export const apiService = {
         throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       }
 
-      console.log("Gửi yêu cầu cập nhật hồ sơ cho:", params.username);
-
       const response = await fetch(`${API_URL}/UserProfile/me`, {
         method: "PUT",
         headers: {
@@ -309,8 +339,6 @@ export const apiService = {
         },
         body: JSON.stringify(params),
       });
-
-      console.log("Update profile status code:", response.status);
 
       // Xử lý các trường hợp lỗi cụ thể
       if (response.status === 401) {
@@ -322,7 +350,6 @@ export const apiService = {
       }
       
       const rawData = await response.json();
-      console.log("Update profile response:", rawData);
 
       if (!response.ok) {
         throw new Error(rawData.message || `Lỗi ${response.status}: Không thể cập nhật hồ sơ`);
@@ -372,8 +399,6 @@ export const apiService = {
   // Gọi API với token xác thực
   async fetchWithAuth(url: string, options: RequestInit = {}, token: string): Promise<any> {
     try {
-      console.log(`Gọi API: ${url}, phương thức: ${options.method || 'GET'}`);
-      
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -381,8 +406,6 @@ export const apiService = {
           ...options.headers,
         },
       });
-
-      console.log(`Kết quả API ${url}: ${response.status} ${response.statusText}`);
 
       // Kiểm tra nếu token hết hạn (401 Unauthorized)
       if (response.status === 401) {

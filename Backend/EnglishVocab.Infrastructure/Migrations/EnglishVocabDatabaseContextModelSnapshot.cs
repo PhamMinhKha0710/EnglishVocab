@@ -25,7 +25,10 @@ namespace EnglishVocab.Infrastructure.Migrations
             modelBuilder.Entity("EnglishVocab.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -60,8 +63,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 625, DateTimeKind.Local).AddTicks(3523),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 626, DateTimeKind.Local).AddTicks(961),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 695, DateTimeKind.Local).AddTicks(5421),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3296),
                             Description = "Common greetings and introductions",
                             ModifiedBy = "System",
                             Name = "Greetings"
@@ -70,8 +73,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 626, DateTimeKind.Local).AddTicks(1195),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 626, DateTimeKind.Local).AddTicks(1197),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3531),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3533),
                             Description = "Common expressions and phrases",
                             ModifiedBy = "System",
                             Name = "Expressions"
@@ -119,8 +122,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 0,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2054),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2059),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5124),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5129),
                             Description = "Basic vocabulary for beginners",
                             ModifiedBy = "System",
                             Name = "Easy",
@@ -130,8 +133,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2062),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2063),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5133),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5134),
                             Description = "Intermediate vocabulary",
                             ModifiedBy = "System",
                             Name = "Medium",
@@ -141,8 +144,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2065),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2066),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5136),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5136),
                             Description = "Advanced vocabulary",
                             ModifiedBy = "System",
                             Name = "Hard",
@@ -152,8 +155,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                         {
                             Id = 3,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2068),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 627, DateTimeKind.Local).AddTicks(2068),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5138),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5139),
                             Description = "Expert level vocabulary",
                             ModifiedBy = "System",
                             Name = "Very Hard",
@@ -591,8 +594,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             AudioUrl = "/audio/hello.mp3",
                             CategoryId = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2377),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2384),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8414),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8426),
                             DifficultyLevelId = 0,
                             English = "Hello",
                             Example = "Hello, how are you today?",
@@ -608,8 +611,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             AudioUrl = "/audio/goodbye.mp3",
                             CategoryId = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2394),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2395),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8435),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8436),
                             DifficultyLevelId = 0,
                             English = "Goodbye",
                             Example = "Goodbye, see you tomorrow!",
@@ -625,8 +628,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             AudioUrl = "/audio/thankyou.mp3",
                             CategoryId = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2399),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 677, DateTimeKind.Local).AddTicks(2400),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8440),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8441),
                             DifficultyLevelId = 0,
                             English = "Thank you",
                             Example = "Thank you for your help.",
@@ -705,8 +708,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             Category = "Beginner",
                             CreatedBy = "System",
                             CreatedByUserId = "1",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 678, DateTimeKind.Local).AddTicks(319),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 678, DateTimeKind.Local).AddTicks(326),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6665),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6672),
                             Description = "Essential greetings and phrases for beginners",
                             ImageUrl = "/images/wordsets/greetings.jpg",
                             IsDefault = false,
@@ -721,8 +724,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                             Category = "Intermediate",
                             CreatedBy = "System",
                             CreatedByUserId = "1",
-                            DateCreated = new DateTime(2025, 7, 19, 7, 12, 0, 678, DateTimeKind.Local).AddTicks(331),
-                            DateModified = new DateTime(2025, 7, 19, 7, 12, 0, 678, DateTimeKind.Local).AddTicks(332),
+                            DateCreated = new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6679),
+                            DateModified = new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6680),
                             Description = "Vocabulary related to food, restaurants, and dining",
                             ImageUrl = "/images/wordsets/food.jpg",
                             IsDefault = false,

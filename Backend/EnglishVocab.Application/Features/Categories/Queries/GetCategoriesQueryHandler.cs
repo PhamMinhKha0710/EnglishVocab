@@ -17,10 +17,7 @@ namespace EnglishVocab.Application.Features.Categories.Queries
         private readonly IDataTableService _dataTableService;
         private readonly IMapper _mapper;
 
-        public GetCategoriesQueryHandler(
-            ICategoryRepository categoryRepository, 
-            IDataTableService dataTableService,
-            IMapper mapper)
+        public GetCategoriesQueryHandler(ICategoryRepository categoryRepository, IDataTableService dataTableService, IMapper mapper)
         {
             _categoryRepository = categoryRepository;
             _dataTableService = dataTableService;

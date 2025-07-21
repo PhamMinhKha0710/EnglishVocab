@@ -11,9 +11,9 @@ namespace EnglishVocab.Infrastructure.Configurations
         {
             builder.HasKey(c => c.Id);
             
-            // Vô hiệu hóa tính năng tự tăng cho cột ID
+            // Thay đổi cấu hình để sử dụng tự động tăng ID
             builder.Property(c => c.Id)
-                .ValueGeneratedNever();
+                .ValueGeneratedOnAdd();
             
             builder.Property(c => c.Name)
                 .IsRequired()

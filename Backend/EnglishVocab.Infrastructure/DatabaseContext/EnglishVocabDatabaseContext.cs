@@ -3,12 +3,8 @@ using EnglishVocab.Domain.Entities;
 using EnglishVocab.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+
 
 namespace EnglishVocab.Infrastructure.DatabaseContext
 {

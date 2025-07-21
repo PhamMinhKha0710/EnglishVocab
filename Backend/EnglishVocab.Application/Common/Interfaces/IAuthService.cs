@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+
 using EnglishVocab.Application.Common.Models;
 using EnglishVocab.Application.Features.Authentication.Commands;
 

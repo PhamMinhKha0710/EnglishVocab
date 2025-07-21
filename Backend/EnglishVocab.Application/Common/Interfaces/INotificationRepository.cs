@@ -1,6 +1,5 @@
 using EnglishVocab.Domain.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 
 namespace EnglishVocab.Application.Common.Interfaces
 {

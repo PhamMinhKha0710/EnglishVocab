@@ -1,41 +1,24 @@
 using EnglishVocab.Application.Common.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
+
 
 namespace EnglishVocab.Application.Common.Interfaces
 {
     public interface IDataTableService
     {
-        /// <summary>
-        /// Tạo DataTableResponse từ IQueryable với phân trang và tìm kiếm
-        /// </summary>
+
         Task<DataTableResponse<T>> CreateResponseAsync<T>(
             IQueryable<T> query,
             DataTableRequest request,
             CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Tạo DataTableResponse từ IEnumerable với phân trang và tìm kiếm
-        /// </summary>
         Task<DataTableResponse<T>> CreateResponseAsync<T>(
             IEnumerable<T> data,
             DataTableRequest request,
             CancellationToken cancellationToken = default);
-            
-        /// <summary>
-        /// Tạo PaginatedResponse từ IQueryable với phân trang và sắp xếp
-        /// </summary>
+
         PaginatedResponse<T> CreatePaginatedResponse<T>(
             IQueryable<T> query,
             PaginationParameters parameters);
-
-        /// <summary>
-        /// Áp dụng phân trang cho IQueryable
-        /// </summary>
         IQueryable<T> ApplyPaging<T>(
             IQueryable<T> query,
             DataTableRequest request);

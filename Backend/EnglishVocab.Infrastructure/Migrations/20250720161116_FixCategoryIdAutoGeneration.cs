@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EnglishVocab.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class v1 : Migration
+    public partial class FixCategoryIdAutoGeneration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,10 +17,10 @@ namespace EnglishVocab.Infrastructure.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    IconUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -39,7 +39,6 @@ namespace EnglishVocab.Infrastructure.Migrations
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Value = table.Column<int>(type: "int", nullable: false),
-                    ColorCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -303,22 +302,22 @@ namespace EnglishVocab.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "CreatedBy", "DateCreated", "DateModified", "Description", "IconUrl", "ModifiedBy", "Name" },
+                columns: new[] { "Id", "CreatedBy", "DateCreated", "DateModified", "Description", "ModifiedBy", "Name" },
                 values: new object[,]
                 {
-                    { 1, "System", new DateTime(2025, 7, 18, 12, 7, 54, 330, DateTimeKind.Local).AddTicks(1017), new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1492), "Common greetings and introductions", "/images/categories/greetings.png", "System", "Greetings" },
-                    { 2, "System", new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1807), new DateTime(2025, 7, 18, 12, 7, 54, 331, DateTimeKind.Local).AddTicks(1810), "Common expressions and phrases", "/images/categories/expressions.png", "System", "Expressions" }
+                    { 1, "System", new DateTime(2025, 7, 20, 23, 11, 15, 695, DateTimeKind.Local).AddTicks(5421), new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3296), "Common greetings and introductions", "System", "Greetings" },
+                    { 2, "System", new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3531), new DateTime(2025, 7, 20, 23, 11, 15, 696, DateTimeKind.Local).AddTicks(3533), "Common expressions and phrases", "System", "Expressions" }
                 });
 
             migrationBuilder.InsertData(
                 table: "DifficultyLevels",
-                columns: new[] { "Id", "ColorCode", "CreatedBy", "DateCreated", "DateModified", "Description", "ModifiedBy", "Name", "Value" },
+                columns: new[] { "Id", "CreatedBy", "DateCreated", "DateModified", "Description", "ModifiedBy", "Name", "Value" },
                 values: new object[,]
                 {
-                    { 0, "#28a745", "System", new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7542), new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7547), "Basic vocabulary for beginners", "System", "Easy", 0 },
-                    { 1, "#ffc107", "System", new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7552), new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7553), "Intermediate vocabulary", "System", "Medium", 1 },
-                    { 2, "#dc3545", "System", new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7556), new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7557), "Advanced vocabulary", "System", "Hard", 2 },
-                    { 3, "#6f42c1", "System", new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7559), new DateTime(2025, 7, 18, 12, 7, 54, 332, DateTimeKind.Local).AddTicks(7560), "Expert level vocabulary", "System", "Very Hard", 3 }
+                    { 0, "System", new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5124), new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5129), "Basic vocabulary for beginners", "System", "Easy", 0 },
+                    { 1, "System", new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5133), new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5134), "Intermediate vocabulary", "System", "Medium", 1 },
+                    { 2, "System", new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5136), new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5136), "Advanced vocabulary", "System", "Hard", 2 },
+                    { 3, "System", new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5138), new DateTime(2025, 7, 20, 23, 11, 15, 697, DateTimeKind.Local).AddTicks(5139), "Expert level vocabulary", "System", "Very Hard", 3 }
                 });
 
             migrationBuilder.InsertData(
@@ -326,8 +325,8 @@ namespace EnglishVocab.Infrastructure.Migrations
                 columns: new[] { "Id", "Category", "CreatedBy", "CreatedByUserId", "DateCreated", "DateModified", "Description", "ImageUrl", "IsDefault", "IsPublic", "ModifiedBy", "Name", "WordCount" },
                 values: new object[,]
                 {
-                    { 1, "Beginner", "System", "1", new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7699), new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7707), "Essential greetings and phrases for beginners", "/images/wordsets/greetings.jpg", false, true, "System", "Greetings and Basic Phrases", 3 },
-                    { 2, "Intermediate", "System", "1", new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7712), new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(7713), "Vocabulary related to food, restaurants, and dining", "/images/wordsets/food.jpg", false, true, "System", "Food and Dining", 0 }
+                    { 1, "Beginner", "System", "1", new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6665), new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6672), "Essential greetings and phrases for beginners", "/images/wordsets/greetings.jpg", false, true, "System", "Greetings and Basic Phrases", 3 },
+                    { 2, "Intermediate", "System", "1", new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6679), new DateTime(2025, 7, 20, 23, 11, 15, 750, DateTimeKind.Local).AddTicks(6680), "Vocabulary related to food, restaurants, and dining", "/images/wordsets/food.jpg", false, true, "System", "Food and Dining", 0 }
                 });
 
             migrationBuilder.InsertData(
@@ -335,9 +334,9 @@ namespace EnglishVocab.Infrastructure.Migrations
                 columns: new[] { "Id", "AudioUrl", "CategoryId", "CreatedBy", "DateCreated", "DateModified", "DifficultyLevelId", "English", "Example", "ImageUrl", "ModifiedBy", "Notes", "Pronunciation", "Vietnamese" },
                 values: new object[,]
                 {
-                    { 1, "/audio/hello.mp3", 1, "System", new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(508), new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(521), 0, "Hello", "Hello, how are you today?", "/images/hello.jpg", "System", "Common greeting", "həˈloʊ", "Xin chào" },
-                    { 2, "/audio/goodbye.mp3", 1, "System", new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(529), new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(530), 0, "Goodbye", "Goodbye, see you tomorrow!", "/images/goodbye.jpg", "System", "Common farewell", "ɡʊdˈbaɪ", "Tạm biệt" },
-                    { 3, "/audio/thankyou.mp3", 2, "System", new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(533), new DateTime(2025, 7, 18, 12, 7, 54, 389, DateTimeKind.Local).AddTicks(534), 0, "Thank you", "Thank you for your help.", "/images/thankyou.jpg", "System", "Common expression of gratitude", "θæŋk ju", "Cảm ơn" }
+                    { 1, "/audio/hello.mp3", 1, "System", new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8414), new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8426), 0, "Hello", "Hello, how are you today?", "/images/hello.jpg", "System", "Common greeting", "həˈloʊ", "Xin chào" },
+                    { 2, "/audio/goodbye.mp3", 1, "System", new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8435), new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8436), 0, "Goodbye", "Goodbye, see you tomorrow!", "/images/goodbye.jpg", "System", "Common farewell", "ɡʊdˈbaɪ", "Tạm biệt" },
+                    { 3, "/audio/thankyou.mp3", 2, "System", new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8440), new DateTime(2025, 7, 20, 23, 11, 15, 749, DateTimeKind.Local).AddTicks(8441), 0, "Thank you", "Thank you for your help.", "/images/thankyou.jpg", "System", "Common expression of gratitude", "θæŋk ju", "Cảm ơn" }
                 });
 
             migrationBuilder.CreateIndex(
